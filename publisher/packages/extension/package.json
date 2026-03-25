@@ -1,0 +1,51 @@
+{
+    "name": "vscode-publisher",
+    "description": "The extension specific package",
+    "version": "0.0.1",
+    "displayName": "publisher",
+    "type": "module",
+    "engines": {
+        "vscode": "^1.67.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "publisher",
+            "aliases": ["Publisher", "publisher"],
+            "extensions": [".publisher"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "publisher",
+            "scopeName": "source.publisher",
+            "path": "syntaxes/publisher.tmLanguage.json"
+        }]
+    },
+    "activationEvents": [
+        "onLanguage:publisher"
+    ],
+    "main": "./out/extension/main.cjs",
+    "scripts": {
+        "clean": "shx rm -fr *.tsbuildinfo out syntaxes",
+        "vscode:prepublish": "npm run build",
+        "build:prepare": "shx mkdir -p ./syntaxes/ && shx cp -f ../language/syntaxes/publisher.tmLanguage.json ./syntaxes/publisher.tmLanguage.json",
+        "build": "npm run build:prepare && tsc -b tsconfig.json && node esbuild.mjs",
+        "build:clean": "npm run clean && npm run build",
+        "watch": "npm run build:prepare && concurrently -n tsc,esbuild -c blue,yellow \"tsc -b tsconfig.json --watch\" \"node esbuild.mjs --watch\""
+    },
+    "dependencies": {
+        "publisher-language": "0.0.1",
+        "vscode-languageclient": "~9.0.1",
+        "vscode-languageserver": "~9.0.1"
+    },
+    "devDependencies": {
+        "@types/vscode": "~1.67.0",
+        "concurrently": "~8.2.1",
+        "esbuild": "~0.25.5"
+    },
+    "vsce": {
+      "dependencies": false
+    }
+}

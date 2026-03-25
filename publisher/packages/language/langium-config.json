@@ -1,0 +1,16 @@
+{
+    "projectName": "Publisher",
+    "languages": [
+        {
+            "id": "publisher",
+            "grammar": "src/publisher.langium",
+            "fileExtensions": [
+                "publisher"
+            ],
+            "textMate": {
+                "out": "syntaxes/publisher.tmLanguage.json"
+            }
+        }
+    ],
+    "out": "src/generated"
+}
