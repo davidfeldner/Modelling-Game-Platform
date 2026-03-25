@@ -1,5 +1,5 @@
 import type { Model } from 'publisher-language';
-import { expandToNode, joinToNode, toString } from 'langium/generate';
+import { expandToNode, toString } from 'langium/generate';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { extractDestinationAndName } from './util.js';
@@ -10,9 +10,8 @@ export function generateJavaScript(model: Model, filePath: string, destination: 
 
     const fileNode = expandToNode`
         "use strict";
-
-        ${joinToNode(model.greetings, greeting => `console.log('Hello, ${greeting.person.ref?.name}!');`, { appendNewLineIfNotEmpty: true })}
     `.appendNewLineIfNotEmpty();
+    //${joinToNode(model.greetings, greeting => `console.log('Hello, ${greeting.person.ref?.name}!');`, { appendNewLineIfNotEmpty: true })}
 
     if (!fs.existsSync(data.destination)) {
         fs.mkdirSync(data.destination, { recursive: true });

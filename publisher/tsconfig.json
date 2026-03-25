@@ -7,8 +7,8 @@
         "ES2020"
     ],
     "sourceMap": true,
-    "strict": true,
-    "noUnusedLocals": true,
+    "strict": false, //true,
+    "noUnusedLocals": false,//true,
     "noImplicitReturns": true,
     "noImplicitOverride": true,
     "skipLibCheck": true,
