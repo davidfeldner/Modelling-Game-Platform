@@ -7,6 +7,26 @@ game Skyrim
     genre Action
     publisher GameDev
     price 1099
-    release_date
-    
+    release_date 01-05-2026
+    state "0"
+    versions
+        version_id "0.0.1"
+        is_current true
+        approved true
+    discounts 
+        percentage 40
+        start_date 01-05-2026
+        end_date 11-11-2026
 
+
+
+review 
+    content "Good game"
+    is_flagged false
+    game Skyrim
+
+sale springSale 
+    start 01-05-2026
+    end 01-05-2026
+    games Skyrim
+ 

@@ -8,7 +8,7 @@ interface GamePublisherType extends NamedElement {
 }
 
 interface GameType extends NamedElement {
-    release_date: Date
+    release_date: string
     price: number
     state: string
     discounts: DiscountType[]
@@ -24,6 +24,7 @@ interface GenreType extends NamedElement {
 interface VersionType {
     version_number: string
     is_current: boolean
+    approved: boolean
 }
 
 interface ReviewType {
@@ -33,15 +34,15 @@ interface ReviewType {
 }
 
 interface SaleType extends NamedElement {
-    start_date: Date
-    end_date: Date
+    start_date: string
+    end_date: string
     games: @GameType[]
 }
 
 interface DiscountType {
     percentage: number
-    start_date: Date
-    end_date: Date
+    start_date: string
+    end_date: string
 }
 
 interface GameApprovalRequestType {
@@ -70,7 +71,8 @@ GamePublisher returns GamePublisherType:
 
 Version returns VersionType:
     'version_id' version_number=STRING
-    'is_current' is_current=BOOLEAN;
+    'is_current' is_current=BOOLEAN
+    'approved' approved=BOOLEAN;
 
 GameApprovalRequest returns GameApprovalRequestType:
     'approval' 'request' 'version' version=[VersionType:STRING];
@@ -93,7 +95,7 @@ Sale returns SaleType:
 
 
 terminal BOOLEAN returns boolean: 'true' | 'false';
-terminal DATE returns Date: /TIME/i;
+terminal DATE: /\d{2}-\d{2}-\d{4}/;
 hidden terminal WS: /\s+/;
 terminal ID: /[_a-zA-Z][\w_]*/;
 terminal INT returns number: /[0-9]+/;
