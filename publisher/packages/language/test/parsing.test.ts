@@ -2,16 +2,16 @@ import { beforeAll, describe, test } from "vitest";
 import { EmptyFileSystem, type LangiumDocument } from "langium";
 import { expandToString as s } from "langium/generate";
 import { parseHelper } from "langium/test";
-import type { Model } from "publisher-language";
-import { createPublisherServices, isModel } from "publisher-language";
+import type { PublisherModel } from "publisher-language";
+import { createPublisherServices, isPublisherModel } from "publisher-language";
 
 let services: ReturnType<typeof createPublisherServices>;
-let parse:    ReturnType<typeof parseHelper<Model>>;
-let document: LangiumDocument<Model> | undefined;
+let parse:    ReturnType<typeof parseHelper<PublisherModel>>;
+let document: LangiumDocument<PublisherModel> | undefined;
 
 beforeAll(async () => {
     services = createPublisherServices(EmptyFileSystem);
-    parse = parseHelper<Model>(services.Publisher);
+    parse = parseHelper<PublisherModel>(services.Publisher);
 
     // activate the following if your linking test requires elements from a built-in library, for example
     // await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);

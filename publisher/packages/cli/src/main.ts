@@ -1,4 +1,4 @@
-import type { Model } from 'publisher-language';
+import type { PublisherModel } from 'publisher-language';
 import { createPublisherServices, PublisherLanguageMetaData } from 'publisher-language';
 import chalk from 'chalk';
 import { Command } from 'commander';
@@ -15,7 +15,7 @@ const packageContent = await fs.readFile(packagePath, 'utf-8');
 
 export const generateAction = async (fileName: string, opts: GenerateOptions): Promise<void> => {
     const services = createPublisherServices(NodeFileSystem).Publisher;
-    const model = await extractAstNode<Model>(fileName, services);
+    const model = await extractAstNode<PublisherModel>(fileName, services);
     const generatedFilePath = generateJavaScript(model, fileName, opts.destination);
     console.log(chalk.green(`JavaScript code generated successfully: ${generatedFilePath}`));
 };

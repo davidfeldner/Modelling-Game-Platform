@@ -49,7 +49,7 @@ interface GameApprovalRequestType {
     version: @VersionType
 }
 
-entry Model:
+entry PublisherModel:
     (games+=Game | publishers+=GamePublisher | requests+=GameApprovalRequest | sales+=Sale | reviews+=Review | genres+=Genre)*;
 
 Game returns GameType:

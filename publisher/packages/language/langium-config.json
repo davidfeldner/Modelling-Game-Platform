@@ -10,6 +10,26 @@
             "textMate": {
                 "out": "syntaxes/publisher.tmLanguage.json"
             }
+        },
+        {
+            "id": "player",
+            "grammar": "src/player.langium",
+            "fileExtensions": [
+                "player"
+            ],
+            "textMate": {
+                "out": "syntaxes/player.tmLanguage.json"
+            }
+        },
+        {
+            "id": "administrator",
+            "grammar": "src/administrator.langium",
+            "fileExtensions": [
+                "administrator"
+            ],
+            "textMate": {
+                "out": "syntaxes/administrator.tmLanguage.json"
+            }
         }
     ],
     "out": "src/generated"

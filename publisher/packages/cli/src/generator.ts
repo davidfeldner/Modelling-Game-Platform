@@ -1,10 +1,10 @@
-import type { Model } from 'publisher-language';
+import type { PublisherModel } from 'publisher-language';
 import { expandToNode, toString } from 'langium/generate';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { extractDestinationAndName } from './util.js';
 
-export function generateJavaScript(model: Model, filePath: string, destination: string | undefined): string {
+export function generateJavaScript(model: PublisherModel, filePath: string, destination: string | undefined): string {
     const data = extractDestinationAndName(filePath, destination);
     const generatedFilePath = `${path.join(data.destination, data.name)}.js`;
 

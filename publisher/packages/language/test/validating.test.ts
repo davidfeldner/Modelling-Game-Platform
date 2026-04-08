@@ -3,16 +3,16 @@ import { EmptyFileSystem, type LangiumDocument } from "langium";
 import { expandToString as s } from "langium/generate";
 import { parseHelper } from "langium/test";
 import type { Diagnostic } from "vscode-languageserver-types";
-import type { Model } from "publisher-language";
-import { createPublisherServices, isModel } from "publisher-language";
+import type { PublisherModel } from "publisher-language";
+import { createPublisherServices, isPublisherModel } from "publisher-language";
 
 let services: ReturnType<typeof createPublisherServices>;
-let parse:    ReturnType<typeof parseHelper<Model>>;
-let document: LangiumDocument<Model> | undefined;
+let parse:    ReturnType<typeof parseHelper<PublisherModel>>;
+let document: LangiumDocument<PublisherModel> | undefined;
 
 beforeAll(async () => {
     services = createPublisherServices(EmptyFileSystem);
-    const doParse = parseHelper<Model>(services.Publisher);
+    const doParse = parseHelper<PublisherModel>(services.Publisher);
     parse = (input: string) => doParse(input, { validation: true });
 
     // activate the following if your linking test requires elements from a built-in library, for example
@@ -57,7 +57,7 @@ function checkDocumentValid(document: LangiumDocument): string | undefined {
           ${document.parseResult.parserErrors.map(e => e.message).join('\n  ')}
     `
         || document.parseResult.value === undefined && `ParseResult is 'undefined'.`
-        || !isModel(document.parseResult.value) && `Root AST object is a ${document.parseResult.value.$type}, expected a 'Model'.`
+        || !isPublisherModel(document.parseResult.value) && `Root AST object is a ${document.parseResult.value.$type}, expected a 'Model'.`
         || undefined;
 }
 

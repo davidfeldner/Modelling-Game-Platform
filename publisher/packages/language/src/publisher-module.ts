@@ -1,6 +1,11 @@
 import { type Module, inject } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
-import { PublisherGeneratedModule, PublisherGeneratedSharedModule } from './generated/module.js';
+import { 
+    PlayerGeneratedModule,
+    AdministratorGeneratedModule,
+    PublisherGeneratedModule, 
+    PublisherGeneratedSharedModule 
+} from './generated/module.js';
 import { PublisherValidator, registerValidationChecks } from './publisher-validator.js';
 
 /**
@@ -46,7 +51,9 @@ export const PublisherModule: Module<PublisherServices, PartialLangiumServices &
  */
 export function createPublisherServices(context: DefaultSharedModuleContext): {
     shared: LangiumSharedServices,
-    Publisher: PublisherServices
+    Publisher: PublisherServices,
+    Administrator: PublisherServices,
+    Player: PublisherServices
 } {
     const shared = inject(
         createDefaultSharedModule(context),
@@ -57,12 +64,26 @@ export function createPublisherServices(context: DefaultSharedModuleContext): {
         PublisherGeneratedModule,
         PublisherModule
     );
+    const Administrator = inject(
+        createDefaultModule({ shared }),
+        AdministratorGeneratedModule,
+        PublisherModule
+    );
+    const Player = inject(
+        createDefaultModule({ shared }),
+        PlayerGeneratedModule,
+        PublisherModule
+    );
     shared.ServiceRegistry.register(Publisher);
+    shared.ServiceRegistry.register(Administrator);
+    shared.ServiceRegistry.register(Player);
     registerValidationChecks(Publisher);
+    registerValidationChecks(Administrator);
+    registerValidationChecks(Player);
     if (!context.connection) {
         // We don't run inside a language server
         // Therefore, initialize the configuration provider instantly
         shared.workspace.ConfigurationProvider.initialized({});
     }
-    return { shared, Publisher };
+    return { shared, Publisher, Player, Administrator };
 }

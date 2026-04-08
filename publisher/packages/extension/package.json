@@ -11,17 +11,44 @@
         "Programming Languages"
     ],
     "contributes": {
-        "languages": [{
+        "languages": [
+            {
             "id": "publisher",
             "aliases": ["Publisher", "publisher"],
             "extensions": [".publisher"],
             "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
+        },
+        {
+            "id": "player",
+            "aliases": ["Player", "player"],
+            "extensions": [".player"],
+            "configuration": "./language-configuration.json"
+        },
+        {
+            "id": "administrator",
+            "aliases": ["Administrator", "administrator"],
+            "extensions": [".administrator"],
+            "configuration": "./language-configuration.json"
+        }
+    ],
+        "grammars": [
+        {
             "language": "publisher",
             "scopeName": "source.publisher",
             "path": "syntaxes/publisher.tmLanguage.json"
-        }]
+        },
+        {
+            "language": "player",
+            "scopeName": "source.player",
+            "path": "syntaxes/player.tmLanguage.json"
+        },
+        {
+            "language": "administrator",
+            "scopeName": "source.administrator",
+            "path": "syntaxes/administrator.tmLanguage.json"
+        }     
+    ]
+        
     },
     "activationEvents": [
         "onLanguage:publisher"
