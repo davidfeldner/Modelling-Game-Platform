@@ -4,14 +4,14 @@ import { expandToString as s } from "langium/generate";
 import { parseHelper } from "langium/test";
 import type { Diagnostic } from "vscode-languageserver-types";
 import type { PublisherModel } from "publisher-language";
-import { createPublisherServices, isPublisherModel } from "publisher-language";
+import { createSharedServices, isPublisherModel } from "publisher-language";
 
-let services: ReturnType<typeof createPublisherServices>;
+let services: ReturnType<typeof createSharedServices>;
 let parse:    ReturnType<typeof parseHelper<PublisherModel>>;
 let document: LangiumDocument<PublisherModel> | undefined;
 
 beforeAll(async () => {
-    services = createPublisherServices(EmptyFileSystem);
+    services = createSharedServices(EmptyFileSystem);
     const doParse = parseHelper<PublisherModel>(services.Publisher);
     parse = (input: string) => doParse(input, { validation: true });
 

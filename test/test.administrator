@@ -22,10 +22,10 @@ game Skyrim
 
 sale springSale 
     start 01-05-2026
-    end 01-05-2026
+    end 01-07-2026
     discounts 
         percentage 40
         start_date 01-05-2026
-        end_date 11-11-2026
+        end_date 01-07-2026
         game Skyrim
  

@@ -1,36 +1,38 @@
 grammar Player
 
 import "publisher";
+import "administrator";
 
 interface PlayerType extends NamedElement {
     balance: number
-    library: LibraryType
-    transactions?: TransactionType[]
+    library: PlayerLibraryType
+    transactions?: PlayerTransactionType[]
 }
 
-interface LibraryType {
-    games: GameRef[]
+interface PlayerLibraryType {
+    games: @PlayerGameType[]
 }
+
+interface PlayerGenreType extends PublisherGenreType {}
 
 interface PlayerGameType extends NamedElement {
     release_date: string
     price: number
     versions: PlayerVersionType[]
-    genre: @GenreType[]
-    publisher: @GamePublisherType
+    genre: @PlayerGenreType[]
+    publisher: @PublisherType
 }
 
 interface PlayerVersionType {
     ID: string
     game_files: string
-    
 }
 
 interface PlayerReviewType {
-    game: GameRef
+    game: @PlayerGameType
     content: string
-    is_flagged: boolean
-    
+    is_flagged: boolean   
+    author: @PlayerType
 }
 
 interface PlayerSaleType extends NamedElement {
@@ -46,18 +48,18 @@ interface PlayerDiscountType {
     game: @PlayerGameType
 }
 
-interface TransactionType {
+interface PlayerTransactionType {
     id: string
     successful: boolean
     date: string
     amount: number
-    game: GameRef
+    game: @PlayerGameType
 }
 
 
 
 entry PlayerModel:
-    (games+= PlayerGame | players+=Player | reviews+=Review)*;
+    (games+= PlayerGame | genres+=PlayerGenre | players+=Player | reviews+=Review)*;
 
 Player returns PlayerType:
     'player' name=ID
@@ -65,23 +67,24 @@ Player returns PlayerType:
     'library' library=Library
     ('transactions' transactions+=Transaction (',' transactions+=Transaction)*)?;
 
-Library returns LibraryType:
-    '[' (games+=GameRef (',' games+=GameRef)*)? ']';
+Library returns PlayerLibraryType:
+    '[' (games+=[PlayerGameType:ID] (',' games+=[PlayerGameType:ID])*)? ']';
 
-GameRef:
-    game=[PlayerGameType:ID];
+PlayerGenre returns PlayerGenreType:
+    'genre' name=ID
+    'description' description=STRING;
 
-Transaction returns TransactionType:
+Transaction returns PlayerTransactionType:
     'transaction' 'id' id=ID
     'successful' successful=BOOLEAN
     'date' date=DATE
     'amount' amount=INT
-    'game' game=GameRef;
+    'game' game=[PlayerGameType:ID];
 
 PlayerGame returns PlayerGameType:
     'game' name=ID
-    'genre' genre+=[GenreType:ID] (',' genre+=[GenreType:ID])*
-    'publisher' publisher=[GamePublisherType:ID]
+    'genre' genre+=[PlayerGenreType:ID] (',' genre+=[PlayerGenreType:ID])*
+    'publisher' publisher=[PublisherType:ID]
     'price' price=INT
     'release_date' release_date=DATE
     'versions' versions+=PlayerVersion  (',' versions+=PlayerVersion)*;
@@ -92,5 +95,6 @@ PlayerVersion returns PlayerVersionType:
 
 Review returns PlayerReviewType:
     'review' 'content' content=STRING
+    'author' author=[PlayerType:ID]
     'is_flagged' is_flagged=BOOLEAN
-    'game' game=GameRef;
+    'game' game=[PlayerGameType:ID];

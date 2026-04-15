@@ -3,14 +3,14 @@ import { EmptyFileSystem, type LangiumDocument } from "langium";
 import { expandToString as s } from "langium/generate";
 import { clearDocuments, parseHelper } from "langium/test";
 import type { PublisherModel } from "publisher-language";
-import { createPublisherServices, isPublisherModel } from "publisher-language";
+import { createSharedServices, isPublisherModel } from "publisher-language";
 
-let services: ReturnType<typeof createPublisherServices>;
+let services: ReturnType<typeof createSharedServices>;
 let parse:    ReturnType<typeof parseHelper<PublisherModel>>;
 let document: LangiumDocument<PublisherModel> | undefined;
 
 beforeAll(async () => {
-    services = createPublisherServices(EmptyFileSystem);
+    services = createSharedServices(EmptyFileSystem);
     parse = parseHelper<PublisherModel>(services.Publisher);
 
     // activate the following if your linking test requires elements from a built-in library, for example

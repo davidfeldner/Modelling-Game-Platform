@@ -7,14 +7,17 @@ import {
     PublisherGeneratedSharedModule 
 } from './generated/module.js';
 import { PublisherValidator, registerValidationChecks } from './publisher-validator.js';
-import { PlayerScopeProvider } from './player-scope-provider.js';
+import { AdministratorValidator } from './administrator-validator.js';
+import { PlayerValidator } from './player-validator.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
  */
-export type PublisherAddedServices = {
+export type SharedAddedServices = {
     validation: {
-        PublisherValidator: PublisherValidator
+        PublisherValidator: PublisherValidator,
+        AdministratorValidator: AdministratorValidator,
+        PlayerValidator: PlayerValidator
     }
 }
 
@@ -22,7 +25,7 @@ export type PublisherAddedServices = {
  * Union of Langium default services and your custom services - use this as constructor parameter
  * of custom service classes.
  */
-export type PublisherServices = LangiumServices & PublisherAddedServices
+export type SharedServices = LangiumServices & SharedAddedServices
 
 
 
@@ -31,13 +34,12 @@ export type PublisherServices = LangiumServices & PublisherAddedServices
  * declared custom services. The Langium defaults can be partially specified to override only
  * selected services, while the custom services must be fully specified.
  */
-export const PublisherModule: Module<PublisherServices, PartialLangiumServices & PublisherAddedServices> = {
+export const PublisherModule: Module<SharedServices, PartialLangiumServices & SharedAddedServices> = {
     validation: {
-        PublisherValidator: () => new PublisherValidator()
+        PublisherValidator: () => new PublisherValidator(),
+        AdministratorValidator: () => new AdministratorValidator(),
+        PlayerValidator: () => new PlayerValidator()
     },
-    references: {
-        ScopeProvider: (services) => new PlayerScopeProvider(services)
-    }
 };
 
 /**
@@ -55,11 +57,11 @@ export const PublisherModule: Module<PublisherServices, PartialLangiumServices &
  * @param context Optional module context with the LSP connection
  * @returns An object wrapping the shared services and the language-specific services
  */
-export function createPublisherServices(context: DefaultSharedModuleContext): {
+export function createSharedServices(context: DefaultSharedModuleContext): {
     shared: LangiumSharedServices,
-    Publisher: PublisherServices,
-    Administrator: PublisherServices,
-    Player: PublisherServices
+    Publisher: SharedServices,
+    Administrator: SharedServices,
+    Player: SharedServices
 } {
     const shared = inject(
         createDefaultSharedModule(context),
