@@ -9,7 +9,7 @@ interface PlayerType extends NamedElement {
 }
 
 interface LibraryType {
-    games: @PlayerGameType[]
+    games: GameRef[]
 }
 
 interface PlayerGameType extends NamedElement {
@@ -27,7 +27,7 @@ interface PlayerVersionType {
 }
 
 interface PlayerReviewType {
-    game: @PlayerGameType
+    game: GameRef
     content: string
     is_flagged: boolean
     
@@ -51,8 +51,10 @@ interface TransactionType {
     successful: boolean
     date: string
     amount: number
-    game: @PlayerGameType
+    game: GameRef
 }
+
+
 
 entry PlayerModel:
     (games+= PlayerGame | players+=Player | reviews+=Review)*;
@@ -64,14 +66,17 @@ Player returns PlayerType:
     ('transactions' transactions+=Transaction (',' transactions+=Transaction)*)?;
 
 Library returns LibraryType:
-    '[' (games+=[PlayerGameType:ID] (',' games+=[PlayerGameType:ID])*)? ']';
+    '[' (games+=GameRef (',' games+=GameRef)*)? ']';
+
+GameRef:
+    game=[PlayerGameType:ID];
 
 Transaction returns TransactionType:
     'transaction' 'id' id=ID
     'successful' successful=BOOLEAN
     'date' date=DATE
     'amount' amount=INT
-    'game' game=[PlayerGameType:ID];
+    'game' game=GameRef;
 
 PlayerGame returns PlayerGameType:
     'game' name=ID
@@ -88,4 +93,4 @@ PlayerVersion returns PlayerVersionType:
 Review returns PlayerReviewType:
     'review' 'content' content=STRING
     'is_flagged' is_flagged=BOOLEAN
-    'game' game=[PlayerGameType:ID];
+    'game' game=GameRef;

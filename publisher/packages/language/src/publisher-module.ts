@@ -7,6 +7,7 @@ import {
     PublisherGeneratedSharedModule 
 } from './generated/module.js';
 import { PublisherValidator, registerValidationChecks } from './publisher-validator.js';
+import { PlayerScopeProvider } from './player-scope-provider.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -23,6 +24,8 @@ export type PublisherAddedServices = {
  */
 export type PublisherServices = LangiumServices & PublisherAddedServices
 
+
+
 /**
  * Dependency injection module that overrides Langium default services and contributes the
  * declared custom services. The Langium defaults can be partially specified to override only
@@ -31,6 +34,9 @@ export type PublisherServices = LangiumServices & PublisherAddedServices
 export const PublisherModule: Module<PublisherServices, PartialLangiumServices & PublisherAddedServices> = {
     validation: {
         PublisherValidator: () => new PublisherValidator()
+    },
+    references: {
+        ScopeProvider: (services) => new PlayerScopeProvider(services)
     }
 };
 
