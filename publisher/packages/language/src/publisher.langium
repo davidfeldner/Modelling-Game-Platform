@@ -5,13 +5,13 @@ interface NamedElement {
 }
 
 interface GamePublisherType extends NamedElement {
+    balance: number
 }
 
 interface GameType extends NamedElement {
     release_date: string
     price: number
     state: string
-    discounts: DiscountType[]
     versions: VersionType[]
     genre: @GenreType[]
     publisher: @GamePublisherType
@@ -22,35 +22,35 @@ interface GenreType extends NamedElement {
 }
 
 interface VersionType {
-    version_number: string
+    ID: string
+    game_files: string
     is_current: boolean
     approved: boolean
-}
-
-interface ReviewType {
-    content: string
-    is_flagged: boolean
-    game: @GameType
 }
 
 interface SaleType extends NamedElement {
     start_date: string
     end_date: string
-    games: @GameType[]
+    discounts: DiscountType[]
 }
 
 interface DiscountType {
     percentage: number
     start_date: string
     end_date: string
+    game: @GameType
 }
 
 interface GameApprovalRequestType {
     version: @VersionType
 }
 
+
+
+
+
 entry PublisherModel:
-    (games+=Game | publishers+=GamePublisher | requests+=GameApprovalRequest | sales+=Sale | reviews+=Review | genres+=Genre)*;
+    (games+=Game | publishers+=GamePublisher | requests+=GameApprovalRequest | sales+=Sale)*;
 
 Game returns GameType:
     'game' name=ID
@@ -59,39 +59,36 @@ Game returns GameType:
     'price' price=INT
     'release_date' release_date=DATE
     'state' state=STRING
-    'versions' versions+=Version  (',' versions+=Version)*
-    ('discounts' discounts+=Discount  (',' discounts+=Discount)*)?;
+    'versions' versions+=Version (',' versions+=Version)*;
+    
 
-Genre returns GenreType:
-    'genre' name=ID
-    'description' description=STRING;
+
 
 GamePublisher returns GamePublisherType:
-    'publisher' name=ID;
+    'publisher' name=ID 'balance' balance=INT;
 
 Version returns VersionType:
-    'version_id' version_number=STRING
+    'version_id' ID=STRING
+    'game_files' game_files=STRING
     'is_current' is_current=BOOLEAN
     'approved' approved=BOOLEAN;
 
 GameApprovalRequest returns GameApprovalRequestType:
     'approval' 'request' 'version' version=[VersionType:STRING];
 
-Review returns ReviewType:
-    'review' 'content' content=STRING
-    'is_flagged' is_flagged=BOOLEAN
-    'game' game=[GameType:ID];
+
 
 Discount returns DiscountType:
     'percentage' percentage=INT
     'start_date' start_date=DATE
-    'end_date' end_date=DATE;
+    'end_date' end_date=DATE
+    'game' game=[GameType:ID];
 
 Sale returns SaleType:
     'sale' name=ID
     'start' start_date=DATE
     'end' end_date=DATE
-    'games' games+=[GameType:ID] (',' games+=[GameType:ID])*;
+    'discounts' discounts+=Discount  (',' discounts+=Discount)*;
 
 
 terminal BOOLEAN returns boolean: 'true' | 'false';

@@ -43,8 +43,8 @@ async function startLanguageClient(context: vscode.ExtensionContext): Promise<La
 
     // Create the language client and start the client.
     const client = new LanguageClient(
-        'publisher',
-        'Publisher',
+        'shared',
+        'Shared',
         serverOptions,
         clientOptions
     );

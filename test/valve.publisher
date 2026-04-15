@@ -1,0 +1,26 @@
+publisher Valve
+balance 1000000
+
+game CS2
+    genre FPS
+    publisher Valve
+    price 1099
+    release_date 01-05-2026
+    state "0"
+    versions
+        version_id "0.0.1"
+        game_files "CS2_v0.0.1.exe"
+        is_current true
+        approved true
+    
+
+
+sale autumnSale 
+    start 01-07-2026
+    end 01-08-2026
+    discounts 
+        percentage 40
+        start_date 01-07-2026
+        end_date 01-08-2026
+        game CS2
+ 

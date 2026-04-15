@@ -1,7 +1,11 @@
-publisher GameDev
+administrator admin
+
 
 genre Action
 description "something"
+
+genre FPS
+description "First person shooter"
 
 game Skyrim
     genre Action
@@ -11,22 +15,17 @@ game Skyrim
     state "0"
     versions
         version_id "0.0.1"
+        game_files "skyrim_v0.0.1.exe"
         is_current true
         approved true
-    discounts 
-        percentage 40
-        start_date 01-05-2026
-        end_date 11-11-2026
-
-
-
-review 
-    content "Good game"
-    is_flagged false
-    game Skyrim
+    
 
 sale springSale 
     start 01-05-2026
     end 01-05-2026
-    games Skyrim
+    discounts 
+        percentage 40
+        start_date 01-05-2026
+        end_date 11-11-2026
+        game Skyrim
  

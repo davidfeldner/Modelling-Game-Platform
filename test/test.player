@@ -1,23 +1,34 @@
-publisher GameDev
-
-genre Action
-description "something"
+player player1
+balance 1000
+library [
+    Skyrim,
+    CS2
+]
+transactions
+    transaction id txn1
+    successful true
+    date 15-04-2026
+    amount 1099
+    game Skyrim
+    
 
 game Skyrim
     genre Action
     publisher GameDev
     price 1099
     release_date 01-05-2026
-    state "0"
     versions
         version_id "0.0.1"
-        is_current true
-        approved true
-    discounts 
-        percentage 40
-        start_date 01-05-2026
-        end_date 11-11-2026
+        game_files "skyrim_v0.0.1.exe"
 
+game CS2
+    genre FPS
+    publisher Valve
+    price 1099
+    release_date 01-05-2026
+    versions
+        version_id "0.0.1"
+        game_files "cs2_v0.0.1.exe"
 
 
 review 
@@ -25,8 +36,4 @@ review
     is_flagged false
     game Skyrim
 
-sale springSale 
-    start 01-05-2026
-    end 01-05-2026
-    games Skyrim
  
