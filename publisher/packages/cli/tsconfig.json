@@ -12,5 +12,5 @@
     ],
     "include": [
         "src/**/*.ts"
-    ]
+, "../language/src/db-model.d.ts"    ]
 }

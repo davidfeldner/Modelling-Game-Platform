@@ -64,7 +64,7 @@ Game returns PublisherGameType:
     'release_date' release_date=DATE
     'state' state=STRING
     'versions' versions+=Version (',' versions+=Version)*;
-    
+
 
 Publisher returns PublisherType:
     'publisher' name=ID 'balance' balance=INT;

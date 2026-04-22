@@ -1,0 +1,19 @@
+game "Example Game 2"
+	genres name "Adventure" description "Adventure is fun"
+	publisher "Example Publisher 1"
+	price 50
+	release_date 2024-01-01
+	versions version_id "1.0" game_files "game1.exe"
+
+game "Example Game 2"
+	genres name "Adventure" description "Adventure is fun"
+	publisher "Example Publisher 2"
+	price 100
+	release_date 2024-01-02
+	versions version_id "1.0" game_files "game2.exe"
+
+	percentage 10
+	tstart_date 2026-04-01
+	end_date 2026-06-10
+	game "undefined"
+

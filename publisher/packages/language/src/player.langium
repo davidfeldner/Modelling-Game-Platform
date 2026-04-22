@@ -1,7 +1,6 @@
 grammar Player
 
 import "publisher";
-import "administrator";
 
 interface PlayerType extends NamedElement {
     balance: number
@@ -13,14 +12,16 @@ interface PlayerLibraryType {
     games: @PlayerGameType[]
 }
 
-interface PlayerGenreType extends PublisherGenreType {}
-
+interface PlayerGenreType extends NamedElement {
+    description: string
+}
 interface PlayerGameType extends NamedElement {
     release_date: string
     price: number
     versions: PlayerVersionType[]
     genre: @PlayerGenreType[]
     publisher: @PublisherType
+    reviews?: PlayerReviewType[]
 }
 
 interface PlayerVersionType {
@@ -29,9 +30,8 @@ interface PlayerVersionType {
 }
 
 interface PlayerReviewType {
-    game: @PlayerGameType
     content: string
-    is_flagged: boolean   
+    is_flagged: boolean
     author: @PlayerType
 }
 
@@ -59,7 +59,7 @@ interface PlayerTransactionType {
 
 
 entry PlayerModel:
-    (games+= PlayerGame | genres+=PlayerGenre | players+=Player | reviews+=Review)*;
+    player=Player (games+=PlayerGame | genres+=PlayerGenre | sales+=PlayerSale)*;
 
 Player returns PlayerType:
     'player' name=ID
@@ -87,7 +87,8 @@ PlayerGame returns PlayerGameType:
     'publisher' publisher=[PublisherType:ID]
     'price' price=INT
     'release_date' release_date=DATE
-    'versions' versions+=PlayerVersion  (',' versions+=PlayerVersion)*;
+    'versions' versions+=PlayerVersion  (',' versions+=PlayerVersion)*
+    ('reviews' reviews+=Review  (',' reviews+=Review)*)?;
 
 PlayerVersion returns PlayerVersionType:
     'version_id' ID=STRING
@@ -96,5 +97,16 @@ PlayerVersion returns PlayerVersionType:
 Review returns PlayerReviewType:
     'review' 'content' content=STRING
     'author' author=[PlayerType:ID]
-    'is_flagged' is_flagged=BOOLEAN
+    'is_flagged' is_flagged=BOOLEAN;
+
+PlayerSale returns PlayerSaleType:
+    'sale' name=ID
+    'start' start_date=DATE
+    'end' end_date=DATE
+    'discounts' discounts+=PlayerDiscount (',' discounts+=PlayerDiscount)*;
+
+PlayerDiscount returns PlayerDiscountType:
+    'percentage' percentage=INT
+    'start_date' start_date=DATE
+    'end_date' end_date=DATE
     'game' game=[PlayerGameType:ID];

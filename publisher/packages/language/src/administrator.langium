@@ -1,9 +1,14 @@
 grammar Administrator
 
 import "publisher";
-import "player";
 
-interface AdministratorType extends NamedElement {}
+// From player:
+interface PlayerType extends NamedElement {
+    balance: number
+}
+
+interface AdministratorType extends NamedElement {
+}
 
 interface AdministratorGameType extends NamedElement {
     release_date: string
@@ -26,7 +31,9 @@ interface AdministratorGameApprovalRequestType {
     status: string
 }
 
-interface AdministratorGenreType extends PublisherGenreType {}
+interface AdministratorGenreType extends NamedElement {
+    description: string
+}
 
 interface AdministratorDiscountType {
     percentage: number
@@ -44,21 +51,36 @@ interface AdministratorSaleType extends NamedElement {
 interface AdministratorReviewType {
     game: @AdministratorGameType
     content: string
-    is_flagged: boolean 
-    author: @PlayerType  
+    is_flagged: boolean
+    author: @PlayerType
 }
 
 
 
 entry AdministratorModel:
-    (games+=Game | administrators+=Administrator | requests+=GameApprovalRequest | sales+=Sale | discounts+=Discount | genres+=AdministratorGenre)*;
+    (games+=Game | administrators+=Administrator | requests+=GameApprovalRequest | sales+=AdministratorSale | discounts+=AdministratorDiscount | genres+=AdministratorGenre)*;
 
 Administrator returns AdministratorType:
     'administrator' name=ID;
 
+AdministratorGame returns AdministratorGameType:
+    'game' name=ID
+    'genre' genre+=[AdministratorGenreType:ID] (',' genre+=[AdministratorGenreType:ID])*
+    'publisher' publisher=[PublisherType:ID]
+    'price' price=INT
+    'release_date' release_date=DATE
+    'state' state=STRING
+    'versions' versions+=AdministratorVersion (',' versions+=AdministratorVersion)*;
+
 AdministratorGenre returns AdministratorGenreType:
     'genre' name=ID
     'description' description=STRING;
+
+AdministratorVersion returns AdministratorVersionType:
+    'version_id' ID=STRING
+    'game_files' game_files=STRING
+    'is_current' is_current=BOOLEAN
+    'approved' approved=BOOLEAN;
 
 AdministratorSale returns AdministratorSaleType:
     'sale' name=ID

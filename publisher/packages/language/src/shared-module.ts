@@ -1,14 +1,15 @@
 import { type Module, inject } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
-import { 
+import {
     PlayerGeneratedModule,
     AdministratorGeneratedModule,
-    PublisherGeneratedModule, 
-    PublisherGeneratedSharedModule 
+    PublisherGeneratedModule,
+    PublisherGeneratedSharedModule
 } from './generated/module.js';
 import { PublisherValidator, registerValidationChecks } from './publisher-validator.js';
 import { AdministratorValidator } from './administrator-validator.js';
 import { PlayerValidator } from './player-validator.js';
+import { databaseModel } from './db-model.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -94,4 +95,14 @@ export function createSharedServices(context: DefaultSharedModuleContext): {
         shared.workspace.ConfigurationProvider.initialized({});
     }
     return { shared, Publisher, Player, Administrator };
+}
+
+let db_state: databaseModel = null;
+
+export function getDBState() {
+    return db_state;
+}
+
+export function setDBState(db: databaseModel) {
+    db_state = db;
 }
