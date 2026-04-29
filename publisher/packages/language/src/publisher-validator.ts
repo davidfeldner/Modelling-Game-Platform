@@ -5,7 +5,7 @@ import type { SharedServices } from './shared-module.js';
 /**
  * Register custom validation checks.
  */
-export function registerValidationChecks(services: SharedServices) {
+export function registerValidationChecksPublisher(services: SharedServices) {
     const registry = services.validation.ValidationRegistry;
     const validator = services.validation.PublisherValidator;
     const checks: ValidationChecks<PublisherAstType> = {
@@ -48,11 +48,11 @@ export class PublisherValidator {
         const saleEnd = new Date(sale.end_date);
         
         for (const discount of sale.discounts) {      
-            const discountStart = new Date(discount.start_date);
-            const discountEnd = new Date(discount.end_date);
+            const discountStart = new Date(discount.ref.start_date);
+            const discountEnd = new Date(discount.ref.end_date);
 
             if (discountStart < saleStart || discountEnd > saleEnd) {
-                accept('error', 'Discount periods in a sale event must be within the sale\'s period.', { node: discount });
+                accept('error', 'Discount periods in a sale event must be within the sale\'s period.', { node: discount.ref });
                 break;
             }
         }

@@ -33,7 +33,7 @@ interface SaleType extends NamedElement {
     discounts: DiscountType[]
 }
 
-interface DiscountType {
+interface DiscountType extends NamedElement{
     percentage: number
     start_date: string
     end_date: string
@@ -41,7 +41,9 @@ interface DiscountType {
 }
 
 interface GameApprovalRequestType {
+    game: GameType
     version: VersionType
+    status: string
 }
 
 interface TransactionType {

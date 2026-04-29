@@ -6,10 +6,12 @@ import {
     PublisherGeneratedModule,
     PublisherGeneratedSharedModule
 } from './generated/module.js';
-import { PublisherValidator, registerValidationChecks } from './publisher-validator.js';
-import { AdministratorValidator } from './administrator-validator.js';
-import { PlayerValidator } from './player-validator.js';
+import { PublisherValidator, registerValidationChecksPublisher } from './publisher-validator.js';
+import { AdministratorValidator, registerValidationChecksAdministrator } from './administrator-validator.js';
+import { PlayerValidator, registerValidationChecksPlayer } from './player-validator.js';
 import { databaseModel } from './db-model.js';
+import { DatabaseService } from './db-service.js';
+import { SharedScopeProvider } from './shared-scope-provider.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -19,6 +21,9 @@ export type SharedAddedServices = {
         PublisherValidator: PublisherValidator,
         AdministratorValidator: AdministratorValidator,
         PlayerValidator: PlayerValidator
+    },
+    db: {
+        DatabaseService: DatabaseService
     }
 }
 
@@ -35,12 +40,18 @@ export type SharedServices = LangiumServices & SharedAddedServices
  * declared custom services. The Langium defaults can be partially specified to override only
  * selected services, while the custom services must be fully specified.
  */
-export const PublisherModule: Module<SharedServices, PartialLangiumServices & SharedAddedServices> = {
+export const SharedModule: Module<SharedServices, PartialLangiumServices & SharedAddedServices> = {
     validation: {
         PublisherValidator: () => new PublisherValidator(),
         AdministratorValidator: () => new AdministratorValidator(),
-        PlayerValidator: () => new PlayerValidator()
+        PlayerValidator: (services) => new PlayerValidator(services)
     },
+    db: {
+        DatabaseService: () => new DatabaseService()
+    },
+    references: {
+        ScopeProvider: (services: LangiumServices) => new SharedScopeProvider(services)
+    }
 };
 
 /**
@@ -71,38 +82,28 @@ export function createSharedServices(context: DefaultSharedModuleContext): {
     const Publisher = inject(
         createDefaultModule({ shared }),
         PublisherGeneratedModule,
-        PublisherModule
+        SharedModule
     );
     const Administrator = inject(
         createDefaultModule({ shared }),
         AdministratorGeneratedModule,
-        PublisherModule
+        SharedModule
     );
     const Player = inject(
         createDefaultModule({ shared }),
         PlayerGeneratedModule,
-        PublisherModule
+        SharedModule
     );
     shared.ServiceRegistry.register(Publisher);
     shared.ServiceRegistry.register(Administrator);
     shared.ServiceRegistry.register(Player);
-    registerValidationChecks(Publisher);
-    registerValidationChecks(Administrator);
-    registerValidationChecks(Player);
+    registerValidationChecksPublisher(Publisher);
+    registerValidationChecksAdministrator(Administrator);
+    registerValidationChecksPlayer(Player);
     if (!context.connection) {
         // We don't run inside a language server
         // Therefore, initialize the configuration provider instantly
         shared.workspace.ConfigurationProvider.initialized({});
     }
     return { shared, Publisher, Player, Administrator };
-}
-
-let db_state: databaseModel = null;
-
-export function getDBState() {
-    return db_state;
-}
-
-export function setDBState(db: databaseModel) {
-    db_state = db;
 }

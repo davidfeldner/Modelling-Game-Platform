@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { URI } from 'langium';
-import { DiscountType } from '../../language/src/db-model.js';
+import { DiscountType, GenreType } from '../../language/src/db-model.js';
 
 export async function extractDocument(fileName: string, services: LangiumCoreServices): Promise<LangiumDocument> {
     const extensions = services.LanguageMetaData.fileExtensions;
@@ -54,10 +54,20 @@ export function extractDestinationAndName(filePath: string, destination?: string
 export function globalDiscountDSL(discount: DiscountType): string {
     let dsl = ''
 
+    dsl += `\tdiscount ${discount.name}\n`;
     dsl += `\tpercentage ${discount.percentage}\n`;
-    dsl += `\ttstart_date ${discount.start_date}\n`;
+    dsl += `\tstart_date ${discount.start_date}\n`;
     dsl += `\tend_date ${discount.end_date}\n`;
     dsl += `\tgame ${`"${discount.game.name}"`}\n\n`
+
+    return dsl
+}
+
+export function globalGenreDSL(genre: GenreType): string {
+    let dsl = ''
+
+    dsl += `\tname ${genre.name}\n`;
+    dsl += `\tdescription ${genre.description}\n`;
 
     return dsl
 }

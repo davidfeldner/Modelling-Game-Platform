@@ -7,25 +7,57 @@ description "something"
 genre FPS
 description "First person shooter"
 
+publisher GameDev
+balance 10000
+
+player player1
+balance 5000
+
 game Skyrim
-    genre Action
+    genres Action, FPS
     publisher GameDev
     price 1099
     release_date 01-05-2026
     state "0"
     versions
-        version_id "0.0.1"
+        version_id beta_v1
+        game_files "skyrim_v0.0.1.exe"
+        is_current true
+        approved true,
+        
+        version_id beta_v2
+        game_files "skyrim_v0.0.2.exe"
+        is_current true
+        approved true
+
+game Skyrim2
+    genres Action, FPS
+    publisher GameDev
+    price 1099
+    release_date 01-05-2026
+    state "0"
+    versions
+        version_id beta_v1
         game_files "skyrim_v0.0.1.exe"
         is_current true
         approved true
+    reviews
+        review 
+        content "Good game"
+        author player1
+        is_flagged false
     
 
+approval request game Skyrim version beta_v1 status "pending"
+
+discount skyrimDiscount1
+    percentage 40
+    start_date 01-04-2026
+    end_date 01-05-2026
+    game Skyrim
+
 sale springSale 
-    start 01-05-2026
-    end 01-07-2026
-    discounts 
-        percentage 40
-        start_date 01-05-2026
-        end_date 01-07-2026
-        game Skyrim
- 
+    start_date 01-04-2026
+    end_date 01-05-2026
+    discounts
+        skyrimDiscount1

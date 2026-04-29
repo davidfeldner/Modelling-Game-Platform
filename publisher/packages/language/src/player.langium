@@ -1,6 +1,10 @@
 grammar Player
 
-import "publisher";
+import "shared";
+
+interface PublisherType extends NamedElement {
+    balance: number
+}
 
 interface PlayerType extends NamedElement {
     balance: number
@@ -19,7 +23,7 @@ interface PlayerGameType extends NamedElement {
     release_date: string
     price: number
     versions: PlayerVersionType[]
-    genre: @PlayerGenreType[]
+    genres: @PlayerGenreType[]
     publisher: @PublisherType
     reviews?: PlayerReviewType[]
 }
@@ -38,10 +42,10 @@ interface PlayerReviewType {
 interface PlayerSaleType extends NamedElement {
     start_date: string
     end_date: string
-    discounts: PlayerDiscountType[]
+    discounts: @PlayerDiscountType[]
 }
 
-interface PlayerDiscountType {
+interface PlayerDiscountType extends NamedElement {
     percentage: number
     start_date: string
     end_date: string
@@ -59,7 +63,7 @@ interface PlayerTransactionType {
 
 
 entry PlayerModel:
-    player=Player (games+=PlayerGame | genres+=PlayerGenre | sales+=PlayerSale)*;
+    player=Player (games+=PlayerGame | genres+=PlayerGenre | sales+=PlayerSale | discounts+=PlayerDiscount)*;
 
 Player returns PlayerType:
     'player' name=ID
@@ -83,7 +87,7 @@ Transaction returns PlayerTransactionType:
 
 PlayerGame returns PlayerGameType:
     'game' name=ID
-    'genre' genre+=[PlayerGenreType:ID] (',' genre+=[PlayerGenreType:ID])*
+    'genres' genres+=[PlayerGenreType:ID] (',' genres+=[PlayerGenreType:ID])*
     'publisher' publisher=[PublisherType:ID]
     'price' price=INT
     'release_date' release_date=DATE
@@ -101,11 +105,12 @@ Review returns PlayerReviewType:
 
 PlayerSale returns PlayerSaleType:
     'sale' name=ID
-    'start' start_date=DATE
-    'end' end_date=DATE
-    'discounts' discounts+=PlayerDiscount (',' discounts+=PlayerDiscount)*;
+    'start_date' start_date=DATE
+    'end_date' end_date=DATE
+    'discounts' discounts+=[PlayerDiscountType:ID] (',' discounts+=[PlayerDiscountType:ID])*;
 
 PlayerDiscount returns PlayerDiscountType:
+    'discount' name=ID
     'percentage' percentage=INT
     'start_date' start_date=DATE
     'end_date' end_date=DATE

@@ -1,8 +1,12 @@
 grammar Publisher
 
-interface NamedElement {
-    name: string
+import "shared"
+
+// From player:
+interface PublisherPlayerType extends NamedElement {
+    balance: number
 }
+
 
 interface PublisherType extends NamedElement {
     balance: number
@@ -13,7 +17,7 @@ interface PublisherGameType extends NamedElement {
     price: number
     state: string
     versions: PublisherVersionType[]
-    genre: @PublisherGenreType[]
+    genres: @PublisherGenreType[]
     publisher: @PublisherType
 }
 
@@ -21,8 +25,7 @@ interface PublisherGenreType extends NamedElement {
     description: string
 }
 
-interface PublisherVersionType {
-    ID: string
+interface PublisherVersionType extends NamedElement {
     game_files: string
     is_current: boolean
     approved: boolean
@@ -31,18 +34,14 @@ interface PublisherVersionType {
 interface PublisherSaleType extends NamedElement {
     start_date: string
     end_date: string
-    discounts: PublisherDiscountType[]
+    discounts: @PublisherDiscountType[]
 }
 
-interface PublisherDiscountType {
+interface PublisherDiscountType extends NamedElement {
     percentage: number
     start_date: string
     end_date: string
     game: @PublisherGameType
-}
-
-interface PublisherGameApprovalRequestType {
-    version: @PublisherVersionType
 }
 
 interface PublisherTransaction {
@@ -53,12 +52,18 @@ interface PublisherTransaction {
     game: @PublisherGameType
 }
 
+interface PublisherReviewType {
+    content: string
+    is_flagged: boolean
+    author: @PublisherPlayerType
+}
+
 entry PublisherModel:
-    (games+=Game | publishers+=Publisher | requests+=GameApprovalRequest | sales+=Sale | discounts+=Discount)*;
+    (games+=Game | publishers+=Publisher | sales+=Sale | discounts+=Discount | genres+=Genre )*;
 
 Game returns PublisherGameType:
     'game' name=ID
-    'genre' genre+=[PublisherGenreType:ID] (',' genre+=[PublisherGenreType:ID])*
+    'genres' genres+=[PublisherGenreType:ID] (',' genres+=[PublisherGenreType:ID])*
     'publisher' publisher=[PublisherType:ID]
     'price' price=INT
     'release_date' release_date=DATE
@@ -70,15 +75,13 @@ Publisher returns PublisherType:
     'publisher' name=ID 'balance' balance=INT;
 
 Version returns PublisherVersionType:
-    'version_id' ID=STRING
+    'version_id' name=ID
     'game_files' game_files=STRING
     'is_current' is_current=BOOLEAN
     'approved' approved=BOOLEAN;
 
-GameApprovalRequest returns PublisherGameApprovalRequestType:
-    'approval' 'request' 'version' version=[PublisherVersionType:STRING];
-
 Discount returns PublisherDiscountType:
+    'discount' name=ID
     'percentage' percentage=INT
     'start_date' start_date=DATE
     'end_date' end_date=DATE
@@ -86,17 +89,10 @@ Discount returns PublisherDiscountType:
 
 Sale returns PublisherSaleType:
     'sale' name=ID
-    'start' start_date=DATE
-    'end' end_date=DATE
-    'discounts' discounts+=Discount (',' discounts+=Discount)*;
+    'start_date' start_date=DATE
+    'end_date' end_date=DATE
+    'discounts' discounts+=[PublisherDiscountType:ID] (',' discounts+=[PublisherDiscountType:ID])*;
 
-
-terminal BOOLEAN returns boolean: 'true' | 'false';
-terminal DATE: /\d{2}-\d{2}-\d{4}/;
-hidden terminal WS: /\s+/;
-terminal ID: /[_a-zA-Z][\w_]*/;
-terminal INT returns number: /[0-9]+/;
-terminal STRING: /"(\\.|[^"\\])*"|'(\\.|[^'\\])*'/;
-
-hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
-hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;
+Genre returns PublisherGenreType:
+    'genre' name=ID
+    'description' description=STRING;

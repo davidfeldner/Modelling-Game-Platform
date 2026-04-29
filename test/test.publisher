@@ -1,27 +1,30 @@
 publisher GameDev
 balance 100
 
+genre Action
+description "Action games"
 
 game Skyrim
-    genre Action
+    genres Action
     publisher GameDev
     price 1099
     release_date 01-05-2026
     state "0"
     versions
-        version_id "0.0.1"
+        version_id beta1
         game_files "skyrim_v0.0.1.exe"
         is_current true
         approved true
     
 
+discount skyrimDiscount1
+    percentage 40
+    start_date 01-04-2026
+    end_date 01-05-2026
+    game Skyrim
 
 sale springSale 
-    start 01-04-2026
-    end 01-05-2026
-    discounts 
-        percentage 40
-        start_date 01-04-2026
-        end_date 01-05-2026
-        game Skyrim
- 
+    start_date 01-04-2026
+    end_date 01-05-2026
+    discounts
+        skyrimDiscount1
