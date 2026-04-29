@@ -40,6 +40,7 @@ export class PlayerValidator {
         //const games = db.games.fo
     }
 
+    // check that if any games are changed, it is adding a legal review
     checkGameChangeReview(game: PlayerGameType, accept: ValidationAcceptor): void {
         
     }
