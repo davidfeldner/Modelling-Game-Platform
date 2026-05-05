@@ -54,7 +54,7 @@ export function extractDestinationAndName(filePath: string, destination?: string
 export function globalDiscountDSL(discount: DiscountType): string {
     let dsl = ''
 
-    dsl += `\tdiscount ${discount.name}\n`;
+    dsl += `discount ${discount.name}\n`;
     dsl += `\tpercentage ${discount.percentage}\n`;
     dsl += `\tstart_date ${discount.start_date}\n`;
     dsl += `\tend_date ${discount.end_date}\n`;
@@ -66,8 +66,8 @@ export function globalDiscountDSL(discount: DiscountType): string {
 export function globalGenreDSL(genre: GenreType): string {
     let dsl = ''
 
-    dsl += `\tname ${genre.name}\n`;
-    dsl += `\tdescription ${genre.description}\n`;
+    dsl += `genre ${genre.name}\n`;
+    dsl += `\tdescription ${`"${genre.description}"`}\n\n`;
 
     return dsl
 }

@@ -97,19 +97,6 @@ export function generateFromDB(fileType: string, userID: string, dest?: string):
 function generatePlayerFile(db: databaseModel, userID: string): string {
     let dsl = '';
 
-    if (db.games) {
-        db.games.forEach(game => {
-            dsl += `game ${`"${game.name}"`}\n`;
-            dsl += `\tgenres ${game.genres?.map(
-                g => globalGenreDSL(g))
-                .join(', ')}\n\n`;
-            dsl += `\tpublisher ${`"${game.publisher.name}"`}\n`;
-            dsl += `\tprice ${game.price}\n`;
-            dsl += `\trelease_date ${game.release_date}\n`;
-            dsl += `\tversions ${game.versions?.map(v => `version_id "${v.ID}" game_files "${v.game_files}"`).join(', ')}\n\n`;
-        });
-    }
-
     if (db.players) {
         db.players.filter(p => p.name == userID)
             .forEach(player => {
@@ -118,6 +105,25 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
                 dsl += `\tlibrary ${player.library.games.join(', ')}\n\n`;
             });
     }
+
+    if (db.genres) {
+        db.genres.forEach(genre => {
+            dsl += globalGenreDSL(genre)
+        });
+    }
+
+    if (db.games) {
+        db.games.forEach(game => {
+            dsl += `game ${`"${game.name}"`}\n`;
+            dsl += `\tgenres ${game.genres?.map(g => g.name)
+                .join(', ')}\n`;
+            dsl += `\tpublisher ${`"${game.publisher.name}"`}\n`;
+            dsl += `\tprice ${game.price}\n`;
+            dsl += `\trelease_date ${game.release_date}\n`;
+            dsl += `\tversions ${game.versions?.map(v => `version_id "${v.ID}" game_files "${v.game_files}"`).join(', ')}\n\n`;
+        });
+    }
+
 
     if (db.sales) {
         db.sales.forEach(sale => {
@@ -138,6 +144,8 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
 
 
 
+
+
     return dsl;
 }
 
@@ -148,7 +156,7 @@ function generatePublisherFile(db: databaseModel, userID: string): string {
         db.games.forEach(game => {
             dsl += `game ${`"${game.name}"`}\n`;
             dsl += `\tgenres ${game.genres?.map(
-                g => globalGenreDSL(g))
+                g => g.name)
                 .join(', ')}\n\n`;
             dsl += `\tpublisher ${`"${game.publisher.name}"`}\n`;
             dsl += `\tprice ${game.price}\n`;

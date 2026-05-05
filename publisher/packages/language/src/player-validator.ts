@@ -1,7 +1,7 @@
-import { AstUtils, type ValidationAcceptor, type ValidationChecks } from 'langium';
-import { PlayerModel, PlayerGameType, PlayerType, PlayerReviewType, type PublisherAstType } from './generated/ast.js';
+import { AstUtils, Reference, type ValidationAcceptor, type ValidationChecks } from 'langium';
+import { PlayerModel, PlayerGameType, PlayerType, PlayerReviewType, type PublisherAstType, PlayerDiscountType, PlayerVersionType, PlayerGenreType } from './generated/ast.js';
 import { type SharedServices } from './shared-module.js';
-import { a } from 'vitest/dist/chunks/suite.d.FvehnV49.js';
+import type { DiscountType, GameType, GenreType, VersionType } from './db-model.d.ts';
 
 /**
  * Register custom validation checks.
@@ -10,10 +10,12 @@ export function registerValidationChecksPlayer(services: SharedServices) {
     const registry = services.validation.ValidationRegistry;
     const validator = services.validation.PlayerValidator;
     const checks: ValidationChecks<PublisherAstType> = {
-        PlayerModel: [validator.checkPlayerModelLegalChanges],
         PlayerType: [
             validator.checkPlayerBalancePositive,
             validator.checkPlayerBalanceCannotDecrease,
+        ],
+        PlayerGameType: [
+            validator.checkGameChange
         ],
         PlayerReviewType: validator.checkReviewGameIsInLibrary,
     };
@@ -24,7 +26,7 @@ export function registerValidationChecksPlayer(services: SharedServices) {
  * Implementation of custom validations.
  */
 export class PlayerValidator {
-    constructor(private services: SharedServices) {}
+    constructor(private services: SharedServices) { }
 
     /**
     *  legal player changes: 
@@ -32,17 +34,119 @@ export class PlayerValidator {
     * - add game to library (if player has money for new game)
     **/
 
-    checkPlayerModelLegalChanges(model: PlayerModel, accept: ValidationAcceptor): void {
-        const db = this.services.db.DatabaseService.getDB(model.player.name);
-        //accept('info', 'Test message', { node: model.player });
-
-        // check all games
-        //const games = db.games.fo
-    }
 
     // check that if any games are changed, it is adding a legal review
-    checkGameChangeReview(game: PlayerGameType, accept: ValidationAcceptor): void {
-        
+    checkGameChange(game: PlayerGameType, accept: ValidationAcceptor): void {
+        const db = this.services.db.DatabaseService.getDB(game.$container.player.name);
+
+        const playerName = game.$container.player.name
+
+        const dbGame = db.games.find(g => g.name == game.name)
+
+        if (!dbGame) {
+            accept('error', 'Players cannot add new games', { node: game, property: 'name' });
+        }
+
+
+        if (game.release_date !== dbGame.release_date) {
+            accept('error', 'Players cannot edit release date of game', { node: game, property: 'release_date' });
+        }
+        if (game.price !== dbGame.price) {
+            accept('error', 'Players cannot edit price of game', { node: game, property: 'price' });
+        }
+        if (game.publisher.ref.name !== dbGame.publisher.name) {
+            accept('error', 'Players cannot edit publisher of game', { node: game, property: 'publisher' });
+        }
+
+        // check reviews
+        this.checkGameReviewsLegal(game, dbGame, playerName, accept)
+
+        // check versions
+        if(this.hasGameVersionsChanged(game.versions, dbGame.versions)) {
+            accept('error', 'Players cannot add edit game versions', { node: game, property: 'versions' });
+        }
+
+        // check genres 
+        if(this.hasGameGenresChanged(game.genres, dbGame.genres)) {
+            accept('error', 'Players cannot add edit game versions', { node: game, property: 'versions' });
+        }
+
+    }
+
+
+    checkGameReviewsLegal(game: PlayerGameType, dbGame: GameType, playerName: string, accept: ValidationAcceptor): void {
+        if (dbGame.reviews.length !== game.reviews.length || this.hasReviewsChanged(game, dbGame)) {
+
+            // Deleted reviews - present in DB but not in model
+            dbGame.reviews.filter(
+                dbReview => !game.reviews.some(
+                    r => r.author.ref.name === dbReview.author.name && r.content === dbReview.content
+                )
+            ).forEach(r => {
+                if (r.author.name !== playerName) {
+                    accept('error', 'Players can only delete their own reviews', { node: game, property: 'reviews' });
+                }
+            });
+
+            // New reviews - not present in DB but present in model
+            game.reviews.filter(
+                r => !dbGame.reviews.some(
+                    dbReview => dbReview.author.name === r.author.ref.name && dbReview.content === r.content
+                )
+            ).forEach(r => this.checkReviewGameIsInLibrary(r, accept));
+
+        }
+
+    }
+
+
+    hasReviewsChanged(game: PlayerGameType, dbGame: GameType): boolean {
+        for (let i = 0; i < game.reviews.length; i++) {
+            const dbReview = dbGame.reviews[i];
+            const gameReview = game.reviews[i];
+
+            if (dbReview.author.name !== gameReview.author.ref.name ||
+                dbReview.content !== gameReview.content ||
+                dbReview.is_flagged !== gameReview.is_flagged) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    hasGameVersionsChanged(versions: PlayerVersionType[], dbVersions: VersionType[]): boolean {
+        for (let i = 0; i < versions.length; i++) {
+            const modelVersion = versions[i];
+            const dbVersion = dbVersions[i];
+
+            if (modelVersion.ID !== dbVersion.ID || modelVersion.game_files !== dbVersion.game_files) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    hasGameGenresChanged(genres: Reference<PlayerGenreType>[], dbGenres: GenreType[]): boolean {
+        for (let i = 0; i < genres.length; i++) {
+            const modelGenre = genres[i];
+            const dbGenre = dbGenres[i];
+
+            if (modelGenre.ref.name !== dbGenre.name) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    checkReviewGameIsInLibrary(review: PlayerReviewType, accept: ValidationAcceptor): void {
+        const games = review.author.ref.library.games.map(g => g.ref.name);
+
+        if (!games.includes(review.$container.name)) {
+            accept('error', 'Player must have game in library to write review', { node: review });
+        }
     }
 
     checkPlayerBalancePositive(player: PlayerType, accept: ValidationAcceptor): void {
@@ -64,66 +168,5 @@ export class PlayerValidator {
         }
     }
 
-    checkReviewGameIsInLibrary(review: PlayerReviewType, accept: ValidationAcceptor): void {
-        const games = review.author.ref.library.games.map(g => g.ref.name);
 
-        if (!games.includes(review.$container.name)) {
-            accept('error', 'Player must have game in library to write review', { node: review });
-        }
-    }
-
-    // checkDiscountsDoNotOverlap(model: PlayerModel, accept: ValidationAcceptor): void {
-    //     const discounts = AstUtils.streamAllContents(model)
-    //         .filter(isPlayerDiscountType)
-    //         .toArray();
-
-    //     const discountsByGameMap = new Map<string, PlayerDiscountType[]>();
-    //     for (const d of discounts) {
-    //         const gameName = d.game.ref?.name;
-    //         if (!discountsByGameMap.has(gameName)) {
-    //             discountsByGameMap.set(gameName, []);
-    //         }
-    //         discountsByGameMap.get(gameName).push(d);
-    //     }
-
-    //     for (const [gameName, discounts] of discountsByGameMap) {
-    //         const sorted = discounts.slice().sort(
-    //             (a, b) =>
-    //                 new Date(a.start_date).getTime() -
-    //                 new Date(b.start_date).getTime()
-    //         );
-
-    //         for (let i = 0; i < sorted.length - 1; i++) {
-    //             const current = sorted[i];
-    //             const next = sorted[i + 1];
-
-    //             const currentEnd = new Date(current.end_date);
-    //             const nextStart = new Date(next.start_date);
-
-    //             if (currentEnd >= nextStart) {
-    //                 accept('error', `Overlapping discounts for game "${gameName}"`, {
-    //                     node: next,
-    //                     property: 'start_date'
-    //                 });
-    //             }
-    //         }
-    //     }
-    // }
-
-    // TODO: Add validation
-    // checkTransactionAmountIsCorrect(transaction: PlayerTransactionType, accept: ValidationAcceptor): void {
-    //     const container = transaction.$container;
-
-    //     const allDiscounts = AstUtils.streamAllContents(container)
-    //         .filter(isPlayerDiscountType)
-    //         .filter(d => d.game == transaction.game)
-    //         .toArray();
-
-    //     for (const discount in allDiscounts){
-    //         // const otherStart = new Date(discount.start_date);
-    //         // const otherEnd = new Date(discount.end_date);
-    //         // const discountStart = new Date(discount.start_date);
-    //         // const discountEnd = new Date(discount.end_date);
-    //     }
-    // }
 }
