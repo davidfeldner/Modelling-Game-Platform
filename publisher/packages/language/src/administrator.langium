@@ -62,7 +62,7 @@ interface AdministratorReviewType {
 
 
 entry AdministratorModel:
-    (games+=AdministratorGame | administrators+=Administrator | requests+=GameApprovalRequest | sales+=AdministratorSale | discounts+=AdministratorDiscount | genres+=AdministratorGenre | publishers+=AdministratorPublisher | players+=AdministratorPlayer)*;
+    administrator=Administrator (games+=AdministratorGame | requests+=GameApprovalRequest | sales+=AdministratorSale | discounts+=AdministratorDiscount | genres+=AdministratorGenre | publishers+=AdministratorPublisher | players+=AdministratorPlayer)*;
 
 Administrator returns AdministratorType:
     'administrator' name=ID;

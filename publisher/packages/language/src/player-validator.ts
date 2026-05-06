@@ -1,7 +1,7 @@
 import { AstUtils, Reference, type ValidationAcceptor, type ValidationChecks } from 'langium';
 import { PlayerModel, PlayerGameType, PlayerType, PlayerReviewType, type PublisherAstType, PlayerDiscountType, PlayerVersionType, PlayerGenreType } from './generated/ast.js';
 import { type SharedServices } from './shared-module.js';
-import type { DiscountType, GameType, GenreType, VersionType } from './db-model.d.ts';
+import type { DiscountType, GameType, GenreType, GenreTypeName, VersionType } from './db-model.d.ts';
 
 /**
  * Register custom validation checks.
@@ -17,7 +17,6 @@ export function registerValidationChecksPlayer(services: SharedServices) {
         PlayerGameType: [
             validator.checkGameChange
         ],
-        PlayerReviewType: validator.checkReviewGameIsInLibrary,
     };
     registry.register(checks, validator);
 }
@@ -38,11 +37,11 @@ export class PlayerValidator {
     // check that if any games are changed, it is adding a legal review
     checkGameChange(game: PlayerGameType, accept: ValidationAcceptor): void {
         const db = this.services.db.DatabaseService.getDB(game.$container.player.name);
-
         const playerName = game.$container.player.name
-
+        
+        console.log("specified game", game.name )
         const dbGame = db.games.find(g => g.name == game.name)
-
+        console.log("Found game in DB", dbGame)
         if (!dbGame) {
             accept('error', 'Players cannot add new games', { node: game, property: 'name' });
         }
@@ -54,6 +53,7 @@ export class PlayerValidator {
         if (game.price !== dbGame.price) {
             accept('error', 'Players cannot edit price of game', { node: game, property: 'price' });
         }
+        console.log("Game publisher is", game.publisher.ref.name, "DB game publisher is", dbGame.publisher.name)
         if (game.publisher.ref.name !== dbGame.publisher.name) {
             accept('error', 'Players cannot edit publisher of game', { node: game, property: 'publisher' });
         }
@@ -62,13 +62,14 @@ export class PlayerValidator {
         this.checkGameReviewsLegal(game, dbGame, playerName, accept)
 
         // check versions
+        console.log("Game versions are", game.versions, "DB game versions are", dbGame.versions)
         if(this.hasGameVersionsChanged(game.versions, dbGame.versions)) {
             accept('error', 'Players cannot add edit game versions', { node: game, property: 'versions' });
         }
 
         // check genres 
         if(this.hasGameGenresChanged(game.genres, dbGame.genres)) {
-            accept('error', 'Players cannot add edit game versions', { node: game, property: 'versions' });
+            accept('error', 'Players cannot add edit game genres', { node: game, property: 'genres' });
         }
 
     }
@@ -120,7 +121,7 @@ export class PlayerValidator {
             const modelVersion = versions[i];
             const dbVersion = dbVersions[i];
 
-            if (modelVersion.ID !== dbVersion.ID || modelVersion.game_files !== dbVersion.game_files) {
+            if (modelVersion.name !== dbVersion.version_id || modelVersion.game_files !== dbVersion.game_files) {
                 return true
             }
         }
@@ -128,12 +129,12 @@ export class PlayerValidator {
         return false
     }
 
-    hasGameGenresChanged(genres: Reference<PlayerGenreType>[], dbGenres: GenreType[]): boolean {
+    hasGameGenresChanged(genres: Reference<PlayerGenreType>[], dbGenres: GenreTypeName[]): boolean {
         for (let i = 0; i < genres.length; i++) {
             const modelGenre = genres[i];
             const dbGenre = dbGenres[i];
 
-            if (modelGenre.ref.name !== dbGenre.name) {
+            if (modelGenre.ref.name !== dbGenre) {
                 return true
             }
         }
@@ -157,16 +158,13 @@ export class PlayerValidator {
 
     checkPlayerBalanceCannotDecrease(player: PlayerType, accept: ValidationAcceptor): void {
         const db = this.services.db.DatabaseService.getDB(player.name);
-        console.log("DATABASE IS", db);
 
         const current_balance = db.players.find(p => p.name == player.name)?.balance;
         if (current_balance === undefined) {
-            accept('warning', 'Player does not exist in database', { node: player });
+            accept('warning', 'Player does not exist in database. You have to push first.', { node: player });
             return;
         } else if (player.balance < current_balance) {
             accept('error', 'Balance cannot decrease', { node: player, property: 'balance' });
         }
     }
-
-
 }

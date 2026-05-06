@@ -1,3 +1,14 @@
+type GameTypeName = string ;
+type PlayerTypeName = string ;
+type PublisherTypeName = string ;
+type GenreTypeName = string ;
+type VersionTypeID = string ;
+type SaleTypeName = string ;
+type DiscountTypeName = string ;
+type AdministratorTypeName = string ;
+type ReviewTypeContent = string ;
+type TransactionTypeID = string ;
+
 interface NamedElement {
     name: string
 }
@@ -11,7 +22,7 @@ interface GameType extends NamedElement {
     price: number
     state: string
     versions: VersionType[]
-    genres: GenreType[]
+    genres: GenreTypeName[]
     publisher: PublisherType
     reviews: ReviewType[]
 }
@@ -21,7 +32,7 @@ interface GenreType extends NamedElement {
 }
 
 interface VersionType {
-    ID: string
+    version_id: string
     game_files: string
     is_current: boolean
     approved: boolean
@@ -37,12 +48,12 @@ interface DiscountType extends NamedElement{
     percentage: number
     start_date: string
     end_date: string
-    game: GameType
+    game: GameTypeName
 }
 
 interface GameApprovalRequestType {
-    game: GameType
-    version: VersionType
+    game: GameTypeName
+    game_version: VersionTypeName
     status: string
 }
 
@@ -70,7 +81,7 @@ interface PlayerType extends NamedElement {
 }
 
 interface LibraryType {
-    games: GameType[]
+    games: GameTypeName[]
 }
 
 

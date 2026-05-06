@@ -59,7 +59,7 @@ interface PublisherReviewType {
 }
 
 entry PublisherModel:
-    (games+=Game | publishers+=Publisher | sales+=Sale | discounts+=Discount | genres+=Genre )*;
+    publisher=Publisher (games+=Game | sales+=Sale | discounts+=Discount | genres+=Genre )*;
 
 Game returns PublisherGameType:
     'game' name=ID

@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { URI } from 'langium';
-import { DiscountType, GenreType } from '../../language/src/db-model.js';
+import { DiscountType, GameType, GenreType, SaleType } from '../../language/src/db-model.js';
 
 export async function extractDocument(fileName: string, services: LangiumCoreServices): Promise<LangiumDocument> {
     const extensions = services.LanguageMetaData.fileExtensions;
@@ -58,7 +58,7 @@ export function globalDiscountDSL(discount: DiscountType): string {
     dsl += `\tpercentage ${discount.percentage}\n`;
     dsl += `\tstart_date ${discount.start_date}\n`;
     dsl += `\tend_date ${discount.end_date}\n`;
-    dsl += `\tgame ${`"${discount.game.name}"`}\n\n`
+    dsl += `\tgame ${`${discount.game}`}\n\n`
 
     return dsl
 }
@@ -70,4 +70,49 @@ export function globalGenreDSL(genre: GenreType): string {
     dsl += `\tdescription ${`"${genre.description}"`}\n\n`;
 
     return dsl
+}
+
+export function getDiscountedPrice(game: GameType, sales: SaleType[], standaloneDiscounts: DiscountType[]) {
+    const discount = getActiveDiscountForGame(game, sales, standaloneDiscounts);
+    if (!discount) return game.price;
+    return game.price * (1 - discount.percentage / 100);
+}
+
+function getActiveDiscountForGame(game: GameType, sales: SaleType[], standaloneDiscounts: DiscountType[]) {
+    const nowTime = new Date().getTime();
+
+    // Check all discounts in sales
+    for (const sale of sales) {
+        const saleStart = new Date(sale.start_date).getTime();
+        const saleEnd = new Date(sale.end_date).getTime();
+
+        if (nowTime < saleStart || nowTime > saleEnd) continue;
+
+        const saleDiscount = sale.discounts.find(d => {
+            const discountStart = new Date(d.start_date).getTime();
+            const discountEnd = new Date(d.end_date).getTime();
+
+            return (
+                d.game === game.name &&
+                nowTime >= discountStart &&
+                nowTime <= discountEnd
+            );
+        });
+        if (saleDiscount) return saleDiscount;
+    }
+
+    // Check all standalone discounts
+    const standaloneDiscount = standaloneDiscounts.find(d => {
+        const discountStart = new Date(d.start_date).getTime();
+        const discountEnd = new Date(d.end_date).getTime();
+
+        return (
+            d.game === game.name &&
+            nowTime >= discountStart &&
+            nowTime <= discountEnd
+        );
+    });
+    if (standaloneDiscount) return standaloneDiscount;
+
+    return undefined;
 }

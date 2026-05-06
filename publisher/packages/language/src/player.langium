@@ -3,7 +3,6 @@ grammar Player
 import "shared";
 
 interface PublisherType extends NamedElement {
-    balance: number
 }
 
 interface PlayerType extends NamedElement {
@@ -28,8 +27,7 @@ interface PlayerGameType extends NamedElement {
     reviews?: PlayerReviewType[]
 }
 
-interface PlayerVersionType {
-    ID: string
+interface PlayerVersionType extends NamedElement {
     game_files: string
 }
 
@@ -63,7 +61,11 @@ interface PlayerTransactionType {
 
 
 entry PlayerModel:
-    player=Player (games+=PlayerGame | genres+=PlayerGenre | sales+=PlayerSale | discounts+=PlayerDiscount)*;
+    player=Player (games+=PlayerGame | genres+=PlayerGenre | sales+=PlayerSale | discounts+=PlayerDiscount | publishers+=Publisher)*;
+
+Publisher returns PublisherType:
+    'publisher' name=ID;
+
 
 Player returns PlayerType:
     'player' name=ID
@@ -95,7 +97,7 @@ PlayerGame returns PlayerGameType:
     ('reviews' reviews+=Review  (',' reviews+=Review)*)?;
 
 PlayerVersion returns PlayerVersionType:
-    'version_id' ID=STRING
+    'version_id' name=STRING
     'game_files' game_files=STRING;
 
 Review returns PlayerReviewType:
