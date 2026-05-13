@@ -1,13 +1,13 @@
-type GameTypeName = string ;
-type PlayerTypeName = string ;
-type PublisherTypeName = string ;
-type GenreTypeName = string ;
-type VersionTypeID = string ;
-type SaleTypeName = string ;
-type DiscountTypeName = string ;
-type AdministratorTypeName = string ;
-type ReviewTypeContent = string ;
-type TransactionTypeID = string ;
+type GameTypeName = string;
+type PlayerTypeName = string;
+type PublisherTypeName = string;
+type GenreTypeName = string;
+type VersionTypeID = string;
+type SaleTypeName = string;
+type DiscountTypeName = string;
+type AdministratorTypeName = string;
+type ReviewTypeContent = string;
+type TransactionTypeID = string;
 
 interface NamedElement {
     name: string
@@ -44,7 +44,7 @@ interface SaleType extends NamedElement {
     discounts: DiscountType[]
 }
 
-interface DiscountType extends NamedElement{
+interface DiscountType extends NamedElement {
     percentage: number
     start_date: string
     end_date: string
@@ -62,7 +62,7 @@ interface TransactionType {
     successful: boolean
     date: string
     amount: number
-    game: GameType
+    game: GameTypeName
 }
 
 interface AdministratorType extends NamedElement {

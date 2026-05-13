@@ -1,6 +1,19 @@
 player Player1
 	balance 100
 	library [ExampleGame2, ExampleGame]
+	transactions id Player1 buys ExampleGame
+	successful true
+	date 2026-05-06T09:35:26.765Z
+	amount 50
+	game ExampleGame
+
+, id Player1 buys ExampleGame
+	successful true
+	date 2026-05-06T09:37:39.098Z
+	amount 45
+	game ExampleGame
+
+
 
 publisher ExamplePublisher1
 publisher ExamplePublisher2
@@ -23,7 +36,7 @@ game ExampleGame2
 
 discount ExampleDiscount1
 	percentage 10
-	start_date 01-01-2026
-	end_date 31-12-2026
+	start_date 04-01-2026
+	end_date 06-10-2026
 	game ExampleGame
 

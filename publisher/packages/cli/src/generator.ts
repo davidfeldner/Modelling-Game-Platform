@@ -2,7 +2,7 @@ import type { PublisherModel, PlayerModel, AdministratorModel } from 'publisher-
 import { expandToNode, toString } from 'langium/generate';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { globalDiscountDSL, globalGenreDSL, getDiscountedPrice } from './util.js';
+import { globalDiscountDSL, globalGenreDSL, getDiscountedPrice, globalTransactionDSL } from './util.js';
 import { databaseModel } from '../../language/src/db-model.js';
 
 function getCurrentDB(dbPath: string): databaseModel {
@@ -147,7 +147,9 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
             .forEach(player => {
                 dsl += `player ${`${player.name}`}\n`;
                 dsl += `\tbalance ${player.balance}\n`;
-                dsl += `\tlibrary [${player.library.games.join(', ')}]\n\n`;
+                dsl += `\tlibrary [${player.library.games.join(', ')}]\n`;
+                dsl += `\ttransactions ${player.transactions.map(t => globalTransactionDSL(t)).join(', ')
+                }\n\n`;
             });
     }
     
