@@ -16,6 +16,11 @@ export function registerValidationChecksAdministrator(services: SharedServices) 
 
 /**
  * Implementation of custom validations.
+ * 
+ * Administrator allowed actions: 
+ * - flag game reviews
+ * - create sales with discounts
+ * - change status for game approval request
  */
 export class AdministratorValidator {
     checkSaleOnlyHasDiscountsWithinSalePeriod(sale: AdministratorSaleType, accept: ValidationAcceptor): void {

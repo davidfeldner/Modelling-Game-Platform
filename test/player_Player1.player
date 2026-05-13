@@ -1,19 +1,17 @@
 player Player1
 	balance 100
 	library [ExampleGame2, ExampleGame]
-	transactions id Player1 buys ExampleGame
-	successful true
-	date 2026-05-06T09:35:26.765Z
-	amount 50
-	game ExampleGame
-
-, id Player1 buys ExampleGame
-	successful true
-	date 2026-05-06T09:37:39.098Z
-	amount 45
-	game ExampleGame
-
-
+	transactions
+		transaction id Player1 buys ExampleGame
+		successful true
+		date 2026-05-06T09:35:26.765Z
+		amount 50
+		game ExampleGame, 
+		transaction id Player1 buys ExampleGame
+		successful true
+		date 2026-05-06T09:37:39.098Z
+		amount 45
+		game ExampleGame
 
 publisher ExamplePublisher1
 publisher ExamplePublisher2
@@ -22,17 +20,24 @@ genre Adventure
 
 game ExampleGame
 	genres Adventure
-	publisher ExamplePublisher1
+	publisher [object Object]
 	price 50
 	release_date 01-01-2024
 	versions version_id "1.0" game_files "game1.exe"
 
 game ExampleGame2
 	genres Adventure
-	publisher ExamplePublisher2
+	publisher [object Object]
 	price 100
 	release_date 01-02-2024
 	versions version_id "1.0" game_files "game2.exe"
+
+game ExampleGame3
+	genres Adventure
+	publisher [object Object]
+	price 1000
+	release_date 01-02-2024
+	versions version_id "1.0" game_files "game3.exe"
 
 discount ExampleDiscount1
 	percentage 10

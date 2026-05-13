@@ -1,5 +1,5 @@
 import { AstUtils, type ValidationAcceptor, type ValidationChecks } from 'langium';
-import { isPublisherDiscountType, PublisherDiscountType, PublisherSaleType, PublisherVersionType, type PublisherAstType } from './generated/ast.js';
+import { isPublisherDiscountType, PublisherDiscountType, PublisherSaleType, PublisherVersionType, PublisherModel, type PublisherAstType, PublisherGameType } from './generated/ast.js';
 import type { SharedServices } from './shared-module.js';
 
 /**
@@ -9,6 +9,7 @@ export function registerValidationChecksPublisher(services: SharedServices) {
     const registry = services.validation.ValidationRegistry;
     const validator = services.validation.PublisherValidator;
     const checks: ValidationChecks<PublisherAstType> = {
+        PublisherModel: validator.checkGamesChanges,
         PublisherDiscountType: validator.checkDiscountsDoNotOverlap,
         PublisherSaleType: validator.checkDiscountPeriodsWithinSalePeriod,
         PublisherVersionType: validator.checkCurrentVersionIsApproved
@@ -18,8 +19,76 @@ export function registerValidationChecksPublisher(services: SharedServices) {
 
 /**
  * Implementation of custom validations.
+ * 
+ * Publisher allowed actions:
+ * - Add new games, where first version is unapproved
+ * - Add new versions for published games
+ * - Add genre 
+ * - Add discounts to published games 
  */
 export class PublisherValidator {
+    constructor(private services: SharedServices) { }
+
+    checkGamesChanges(model: PublisherModel, accept: ValidationAcceptor): void {
+        const publisherName = model.publisher.name
+
+        const db = this.services.db.DatabaseService.getDBSnapshot(publisherName);
+        if (db === undefined) {
+            accept('warning', 'Could not check cached player library. Try pulling first.', { node: model });
+            return;
+        }
+
+        const modelGames = model.games.map(g => g.name);
+        const dbGames = db.games.map(g => g.name); 
+
+        const removedGames = dbGames.filter(g => !modelGames.includes(g))
+        if (removedGames.length != 0 ){
+            accept('error', 'Publisher cannot remove existing game or edit existing name', { node: model });
+        }
+
+        const newGames = modelGames.filter(g => !dbGames.includes(g))
+
+        newGames.forEach(name => {
+            const newGame = model.games.find(g => g.name == name)
+            this.checkNewGame(newGame, accept)
+            
+        })
+
+    }
+
+    checkNewGame(game: PublisherGameType, accept: ValidationAcceptor): void {
+        // price
+        if (game.price < 0){
+            accept('error', 'Game price cannot be negative', { node: game, property: "price"});
+        }
+
+        // release date
+        const releaseTime = new Date(game.release_date).getTime()
+        const nowTime = new Date().getTime()
+        if (releaseTime > nowTime){
+            accept('error', 'Game release date cannot be in the future', { node: game, property: "release_date"});
+        }
+
+        // versions
+        if (game.versions.length != 1) {
+            accept('error', 'Unpublished games must only have an initial version', { node: game, property: "versions"});
+        }
+        const initVersion = game.versions[0]
+        if (initVersion.approved) {
+            accept('error', 'Initial version must be unapproved', { node: initVersion, property: "approved"});
+        }
+        if (initVersion.is_current){
+            accept('error', 'Initial version cannot be current until it is approved', { node: initVersion, property: "is_current"});
+
+        }
+
+        // reviews
+        if (game.reviews.length != 0){
+            accept('error', 'Unpublished games cannot have reviews', { node: game, property: "reviews"});
+        }
+        
+    }
+
     checkDiscountsDoNotOverlap(discount: PublisherDiscountType, accept: ValidationAcceptor): void {
         const container = discount.$container;
 

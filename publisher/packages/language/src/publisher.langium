@@ -15,10 +15,10 @@ interface PublisherType extends NamedElement {
 interface PublisherGameType extends NamedElement {
     release_date: string
     price: number
-    state: string
     versions: PublisherVersionType[]
     genres: @PublisherGenreType[]
     publisher: @PublisherType
+    reviews?: PublisherReviewType[]
 }
 
 interface PublisherGenreType extends NamedElement {
@@ -65,20 +65,25 @@ Game returns PublisherGameType:
     'game' name=ID
     'genres' genres+=[PublisherGenreType:ID] (',' genres+=[PublisherGenreType:ID])*
     'publisher' publisher=[PublisherType:ID]
-    'price' price=INT
+    'price' price=FLOAT
     'release_date' release_date=DATE
-    'state' state=STRING
-    'versions' versions+=Version (',' versions+=Version)*;
+    'versions' versions+=Version (',' versions+=Version)*
+    ('reviews' reviews+=Review  (',' reviews+=Review)*)?;
 
 
 Publisher returns PublisherType:
-    'publisher' name=ID 'balance' balance=INT;
+    'publisher' name=ID 'balance' balance=FLOAT;
 
 Version returns PublisherVersionType:
-    'version_id' name=ID
+    'version_id' name=STRING
     'game_files' game_files=STRING
     'is_current' is_current=BOOLEAN
     'approved' approved=BOOLEAN;
+
+Review returns PublisherReviewType:
+    'review' 'content' content=STRING
+    'author' author=[PublisherPlayerType:ID]
+    'is_flagged' is_flagged=BOOLEAN;
 
 Discount returns PublisherDiscountType:
     'discount' name=ID

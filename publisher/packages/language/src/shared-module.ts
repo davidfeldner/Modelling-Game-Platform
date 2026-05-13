@@ -12,6 +12,7 @@ import { PlayerValidator, registerValidationChecksPlayer } from './player-valida
 import { databaseModel } from './db-model.js';
 import { DatabaseService } from './db-service.js';
 import { SharedScopeProvider } from './shared-scope-provider.js';
+import { UtilService } from './shared-util.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -24,6 +25,9 @@ export type SharedAddedServices = {
     },
     db: {
         DatabaseService: DatabaseService
+    },
+    util: {
+        UtilService: UtilService
     }
 }
 
@@ -42,12 +46,15 @@ export type SharedServices = LangiumServices & SharedAddedServices
  */
 export const SharedModule: Module<SharedServices, PartialLangiumServices & SharedAddedServices> = {
     validation: {
-        PublisherValidator: () => new PublisherValidator(),
+        PublisherValidator: (services) => new PublisherValidator(services),
         AdministratorValidator: () => new AdministratorValidator(),
         PlayerValidator: (services) => new PlayerValidator(services)
     },
     db: {
         DatabaseService: () => new DatabaseService()
+    },
+    util: {
+        UtilService: () => new UtilService()
     },
     references: {
         ScopeProvider: (services: LangiumServices) => new SharedScopeProvider(services)

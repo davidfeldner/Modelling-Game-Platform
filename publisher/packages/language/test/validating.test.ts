@@ -23,7 +23,7 @@ describe('Validating', () => {
 
     test('check no errors', async () => {
         document = await parse(`
-            person Langium
+            publisher ExamplePublisher balance 1000
         `);
 
         expect(
@@ -35,19 +35,27 @@ describe('Validating', () => {
         ).toHaveLength(0);
     });
 
-    test('check capital letter validation', async () => {
+    // - Is Skyrim a game?
+    test('check Skyrim is a game', async () => {
         document = await parse(`
-            person langium
-        `);
+            publisher Bethesda_Game_Studios
+            balance 10000
 
+            genre RPG
+	        description "Role Playing Game genre"
+
+            game The_Elder_Scrolls_V_Skyrim_Special_Edition
+                genres RPG
+                publisher Bethesda_Game_Studios 
+                price 3999
+                release_date 28-08-2016
+                state "approved"
+                versions version_id "1.6.1179" game_files "skyrim.exe" is_current true approved true
+        `);
+        
         expect(
             checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n')
-        ).toEqual(
-            // 'expect.stringContaining()' makes our test robust against future additions of further validation rules
-            expect.stringContaining(s`
-                [1:19..1:26]: Person name should start with a capital.
-            `)
-        );
+        ).toHaveLength(0);
     });
 });
 

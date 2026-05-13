@@ -20,10 +20,9 @@ interface PublisherType extends NamedElement {
 interface GameType extends NamedElement {
     release_date: string
     price: number
-    state: string
     versions: VersionType[]
     genres: GenreTypeName[]
-    publisher: PublisherType
+    publisher: PublisherTypeName
     reviews: ReviewType[]
 }
 
@@ -41,7 +40,7 @@ interface VersionType {
 interface SaleType extends NamedElement {
     start_date: string
     end_date: string
-    discounts: DiscountType[]
+    discounts: DiscountTypeName[]
 }
 
 interface DiscountType extends NamedElement {

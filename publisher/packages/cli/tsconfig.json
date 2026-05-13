@@ -11,6 +11,8 @@
         }
     ],
     "include": [
-        "src/**/*.ts"
-, "../language/src/db-model.d.ts"    ]
+        "src/**/*.ts",
+        "../language/src/db-model.d.ts",
+        "../language/src/shared-util.ts"     
+    ]
 }

@@ -1,7 +1,9 @@
+import * as langium from 'langium';
 import { AstUtils, Reference, type ValidationAcceptor, type ValidationChecks } from 'langium';
 import { PlayerModel, PlayerGameType, PlayerLibraryType, PlayerType, PlayerReviewType, type PublisherAstType, PlayerDiscountType, PlayerVersionType, PlayerGenreType } from './generated/ast.js';
 import { type SharedServices } from './shared-module.js';
-import type { DiscountType, GameType, GenreType, GenreTypeName, VersionType } from './db-model.d.ts';
+import type { databaseModel, DiscountType, GameType, GenreType, GenreTypeName, VersionType } from './db-model.d.ts';
+//import { getDiscountedPrice } from './shared-util.js';
 
 /**
  * Register custom validation checks.
@@ -14,8 +16,11 @@ export function registerValidationChecksPlayer(services: SharedServices) {
             validator.checkPlayerBalancePositive,
             validator.checkPlayerBalanceCannotDecrease,
         ],
-        PlayerGameType: [
-            validator.checkGameChange
+        PlayerLibraryType: [
+            validator.checkLibraryChange,
+        ],
+        PlayerModel: [
+            validator.checkNoUnauthorizedChanges,
         ],
     };
     registry.register(checks, validator);
@@ -29,46 +34,52 @@ export class PlayerValidator {
 
     /**
     *  legal player changes: 
-    * - review
+    * - add review on owned game
     * - add game to library (if player has money for new game)
     **/
 
     checkLibraryChange(library: PlayerLibraryType, accept: ValidationAcceptor): void {
         const playerName = library.$container.name;
-        const db = this.services.db.DatabaseService.getDB(playerName);
 
+        const db = this.services.db.DatabaseService.getDBSnapshot(playerName);
+        if (db === undefined) {
+            accept('warning', 'Could not check cached player library. Try pulling first.', { node: library });
+            return;
+        }
 
-        const playerBalance = db.players.find(p => p.name == playerName).balance;
+        library.games.forEach(g => {
+            this.checkGameChange(g.ref, accept);
+        });
 
         const dbLibraryGames = db.players.find(p => p.name == playerName).library.games;
         const modelLibraryGames = library.games.map(g => g.ref.name);
         const removedGames = dbLibraryGames.filter(g => !modelLibraryGames.includes(g));
-
         if (removedGames.length != 0) {
             accept('error', 'Players cannot remove games from their library', { node: library });
         }
 
         const addedGames = modelLibraryGames.filter(g => !dbLibraryGames.includes(g));
-
         if (addedGames.length != 0) {
+            const playerBalance = db.players.find(p => p.name == playerName).balance;
             let sum = 0;
             addedGames.forEach(g => {
-                sum += db.games.find(i => i.name == g).price;
-            })
+                const game = db.games.find(i => i.name == g)
+                sum += this.services.util.UtilService.getDiscountedPrice(game, db.sales, db.discounts);
+            });
             if (sum > playerBalance) {
                 accept('error', 'Price of new games in library exceeds player balance', { node: library });
             }
         }
-
     }
 
 
-    // check that if any games are changed, it is adding a legal review
+
+
     checkGameChange(game: PlayerGameType, accept: ValidationAcceptor): void {
         console.log("specified game", game.name);
-
         const playerName = game.$container.player.name;
-        const db = this.services.db.DatabaseService.getDB(playerName);
+
+        const db = this.services.db.DatabaseService.getDBSnapshot(playerName);
         if (db === undefined) {
             accept('warning', 'Could not check cached games. Try pulling first.', { node: game });
             return;
@@ -77,32 +88,27 @@ export class PlayerValidator {
         const dbGame = db?.games.find(g => g.name == game.name);
         if (dbGame === undefined) {
             accept('error', 'Players cannot add new games', { node: game, property: 'name' });
-            return;
         }
         console.log("Found game in DB", dbGame);
 
         if (game.release_date !== dbGame.release_date) {
             accept('error', 'Players cannot edit release date of game', { node: game, property: 'release_date' });
-            return;
         }
         if (game.price !== dbGame.price) {
             accept('error', 'Players cannot edit price of game', { node: game, property: 'price' });
-            return;
         }
-        console.log("Game publisher is", game.publisher.ref.name, "DB game publisher is", dbGame.publisher.name)
-        if (game.publisher.ref.name !== dbGame.publisher.name) {
+        console.log("Game publisher is", game.publisher.ref.name, "DB game publisher is", dbGame.publisher)
+        if (game.publisher.ref.name !== dbGame.publisher) {
             accept('error', 'Players cannot edit publisher of game', { node: game, property: 'publisher' });
-            return;
         }
 
         // check reviews
-        this.checkGameReviewsLegal(game, dbGame, playerName, accept)
+        this.checkGameReviewsLegal(game, dbGame, playerName, accept);
 
         // check versions
-        console.log("Game versions are", game.versions, "DB game versions are", dbGame.versions)
+        console.log("Game versions are", game.versions, "DB game versions are", dbGame.versions);
         if (this.hasGameVersionsChanged(game.versions, dbGame.versions)) {
             accept('error', 'Players cannot add edit game versions', { node: game, property: 'versions' });
-            return;
         }
 
         // check genres 
@@ -133,7 +139,6 @@ export class PlayerValidator {
             ).forEach(r => this.checkReviewGameIsInLibrary(r, accept));
 
         }
-
     }
 
 
@@ -152,6 +157,16 @@ export class PlayerValidator {
         return false
     }
 
+
+    checkReviewGameIsInLibrary(review: PlayerReviewType, accept: ValidationAcceptor): void {
+        const games = review.author.ref.library.games.map(g => g.ref.name);
+
+        if (!games.includes(review.$container.name)) {
+            accept('error', 'Player must have game in library to write review', { node: review });
+        }
+    }
+
+
     hasGameVersionsChanged(versions: PlayerVersionType[], dbVersions: VersionType[]): boolean {
         for (let i = 0; i < versions.length; i++) {
             const modelVersion = versions[i];
@@ -164,6 +179,7 @@ export class PlayerValidator {
 
         return false
     }
+
 
     hasGameGenresChanged(genres: Reference<PlayerGenreType>[], dbGenres: GenreTypeName[]): boolean {
         for (let i = 0; i < genres.length; i++) {
@@ -178,13 +194,6 @@ export class PlayerValidator {
         return false
     }
 
-    checkReviewGameIsInLibrary(review: PlayerReviewType, accept: ValidationAcceptor): void {
-        const games = review.author.ref.library.games.map(g => g.ref.name);
-
-        if (!games.includes(review.$container.name)) {
-            accept('error', 'Player must have game in library to write review', { node: review });
-        }
-    }
 
     checkPlayerBalancePositive(player: PlayerType, accept: ValidationAcceptor): void {
         if (player.balance < 0) {
@@ -192,15 +201,87 @@ export class PlayerValidator {
         }
     }
 
-    checkPlayerBalanceCannotDecrease(player: PlayerType, accept: ValidationAcceptor): void {
-        const db = this.services.db.DatabaseService.getDB(player.name);
 
-        const current_balance = db?.players.find(p => p.name == player.name)?.balance;
-        if (current_balance === undefined) {
+    checkPlayerBalanceCannotDecrease(player: PlayerType, accept: ValidationAcceptor): void {
+        const db = this.services.db.DatabaseService.getDBSnapshot(player.name);
+        if (db === undefined) {
             accept('warning', 'Could not check cached player balance. Try pulling first.', { node: player });
             return;
-        } else if (player.balance < current_balance) {
+        }
+
+        const current_balance = db?.players.find(p => p.name == player.name)?.balance;
+        if (player.balance < current_balance) {
             accept('error', 'Balance cannot decrease', { node: player, property: 'balance' });
         }
+    }
+
+
+    checkNoUnauthorizedChanges(model: PlayerModel, accept: ValidationAcceptor): void {
+        const db = this.services.db.DatabaseService.getDBSnapshot(model.player.name);
+        if (db === undefined) {
+            accept('warning', 'Could not check cached data. Try pulling first.', { node: model });
+            return;
+        }
+
+        const dbPlayer = db.players.find(p => p.name === model.player.name);
+        const dbModel = {
+            player: dbPlayer,
+            games: db.games,
+            genres: db.genres,
+            sales: db.sales,
+            discounts: db.discounts,
+            publishers: db.publishers
+        };
+        const allowed = [
+            'player.balance',
+            'player.library.games[*]',
+            'player.library.games[*].reviews[*]',
+        ];
+        this.assertNoUnauthorizedChanges(model, dbModel, allowed, accept, model);
+    }
+
+
+    assertNoUnauthorizedChanges(modelNode: any, dbModelNode: any, allowed: string[], accept: ValidationAcceptor, nodeForReport: any, path = ''): void {
+        if (this.matches(path, allowed)) {
+            return
+        };
+
+        if (this.isLangiumRef(modelNode) || this.isLangiumRef(dbModelNode) || modelNode == null || dbModelNode == null || typeof modelNode !== 'object' || typeof dbModelNode !== 'object') {
+            if (this.norm(modelNode) !== this.norm(dbModelNode)) {
+                accept('error', 'Editing value not allowed', { node: nodeForReport })
+            };
+            return;
+        }
+
+        if (Array.isArray(modelNode) || Array.isArray(dbModelNode)) {
+            const a = Array.isArray(modelNode) ? modelNode : [];
+            const b = Array.isArray(dbModelNode) ? dbModelNode : [];
+            for (let i = 0; i < Math.max(a.length, b.length); i++) {
+                this.assertNoUnauthorizedChanges(a[i], b[i], allowed, accept, nodeForReport, `${path}[${i}]`);
+            }
+            return;
+        }
+
+        for (const k of new Set([...Object.keys(modelNode || {}), ...Object.keys(dbModelNode || {})])) {
+            if (k.startsWith('$')) continue;
+            this.assertNoUnauthorizedChanges(modelNode[k], dbModelNode[k], allowed, accept, nodeForReport, path ? `${path}.${k}` : k);
+        }
+    }
+
+
+    matches(path: string, allowed: string[]) {
+        return allowed.some(p => {
+            p === path || new RegExp('^' + p.replace(/\./g, '\\.').replace(/\[\*\]/g, '\\[[0-9]+\\]')).test(path)
+        });
+    }
+
+
+    isLangiumRef(x: any): x is langium.Reference<any> {
+        return x && 'ref' in x;
+    }
+
+
+    norm(x: any) {
+        return this.isLangiumRef(x) ? x.ref : x;
     }
 }

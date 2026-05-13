@@ -17,7 +17,6 @@ interface AdministratorType extends NamedElement {
 interface AdministratorGameType extends NamedElement {
     release_date: string
     price: number
-    state: string
     versions: AdministratorVersionType[]
     genres: @AdministratorGenreType[]
     publisher: @AdministratorPublisherType
@@ -71,9 +70,8 @@ AdministratorGame returns AdministratorGameType:
     'game' name=ID
     'genres' genres+=[AdministratorGenreType:ID] (',' genres+=[AdministratorGenreType:ID])*
     'publisher' publisher=[AdministratorPublisherType:ID]
-    'price' price=INT
+    'price' price=FLOAT
     'release_date' release_date=DATE
-    'state' state=STRING
     'versions' versions+=AdministratorVersion (',' versions+=AdministratorVersion)*
     ('reviews' reviews+=AdministratorReview (',' reviews+=AdministratorReview)*)?;
 
@@ -86,7 +84,7 @@ GameApprovalRequest returns AdministratorGameApprovalRequestType:
 
 
 AdministratorVersion returns AdministratorVersionType:
-    'version_id' name=ID
+    'version_id' name=STRING
     'game_files' game_files=STRING
     'is_current' is_current=BOOLEAN
     'approved' approved=BOOLEAN;
@@ -110,7 +108,7 @@ AdministratorReview returns AdministratorReviewType:
     'is_flagged' is_flagged=BOOLEAN;
 
 AdministratorPublisher returns AdministratorPublisherType:
-    'publisher' name=ID 'balance' balance=INT;
+    'publisher' name=ID 'balance' balance=FLOAT;
 
 AdministratorPlayer returns AdministratorPlayerType:
-    'player' name=ID 'balance' balance=INT;
+    'player' name=ID 'balance' balance=FLOAT;
