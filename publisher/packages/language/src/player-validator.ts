@@ -19,7 +19,7 @@ export function registerValidationChecksPlayer(services: SharedServices) {
             validator.checkLibraryChange,
         ],
         PlayerModel: [
-            //validator.checkNoUnauthorizedChanges,
+            validator.checkNoUnauthorizedChanges,
         ],
     };
     registry.register(checks, validator);
@@ -236,8 +236,8 @@ export class PlayerValidator {
         }
 
         if (modelNode == null || dbModelNode == null || typeof modelNode !== 'object' || typeof dbModelNode !== 'object' || this.isLangiumRef(modelNode) || this.isLangiumRef(dbModelNode)) {
-            if (this.norm(modelNode) !== this.norm(dbModelNode)) {
-                accept('error', `Editing value not allowed ${modelNode} vs ${dbModelNode}`, { node: nodeForReport });
+            if (this.normalizeNodeValue(modelNode) !== this.normalizeNodeValue(dbModelNode)) {
+                accept('error', `Editing value not allowed ${this.normalizeNodeValue(modelNode)} vs ${this.normalizeNodeValue(dbModelNode)}`, { node: nodeForReport });
             }
             return;
         }
@@ -259,11 +259,10 @@ export class PlayerValidator {
             return;
         }
 
-        // Use DB keys as the authoritative basis. First check keys present in DB (detect deletions/edits),
+        // Use DB keys as the basis for comparison. First check keys present in DB (detect deletions/edits),
         // then detect any extra keys in the model (additions).
         const dbKeys = Object.keys(dbModelNode || {});
         const modelKeys = Object.keys(modelNode || {}).filter(k => !k.startsWith('$'));
-
         for (const k of dbKeys) {
             this.assertNoUnauthorizedChanges(
                 modelNode && k in modelNode ? modelNode[k] : undefined,
@@ -274,7 +273,6 @@ export class PlayerValidator {
                 path ? `${path}.${k}` : k
             );
         }
-
         for (const k of modelKeys) {
             if (dbKeys.includes(k)) continue;
             this.assertNoUnauthorizedChanges(
@@ -299,8 +297,8 @@ export class PlayerValidator {
     }
 
 
-    norm(x: any) {
-        if (this.isLangiumRef(x)) return this.norm(x.ref);
+    normalizeNodeValue(x: any) {
+        if (this.isLangiumRef(x)) return this.normalizeNodeValue(x.ref);
         if (x == null) return x;
         if (typeof x !== 'object') return x;
         // Prefer common identity fields for comparison

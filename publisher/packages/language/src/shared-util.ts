@@ -80,7 +80,7 @@ export class UtilService {
             library: {
                 games: (dbPlayer.library?.games || []).map(g => ({ name: g }))
             },
-            transactions: (dbPlayer.transactions || []).map(t => ({ id: t.id, successful: t.successful, date: t.date, amount: t.amount, game: { name: t.game.name } }))
+            transactions: (dbPlayer.transactions || []).map(t => ({ id: t.id, successful: t.successful, date: t.date, amount: t.amount, game: { name: t.game } }))
         };
 
         return {
