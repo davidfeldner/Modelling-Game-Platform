@@ -70,7 +70,7 @@ export function globalTransactionDSL(transaction: TransactionType): string {
     dsl += `\ttransaction id ${transaction.id}\n`;
     dsl += `\t\tsuccessful ${transaction.successful}\n`;
     dsl += `\t\tdate ${transaction.date}\n`;
-    dsl += `\t\tamount ${transaction.amount}\n`;
+    dsl += `\t\tamount ${transaction.amount.toFixed(1)}\n`;
     dsl += `\t\tgame ${transaction.game}`
 
     return dsl

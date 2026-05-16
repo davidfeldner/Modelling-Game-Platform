@@ -14,11 +14,8 @@
                 "Adventure"
             ],
             "name": "ExampleGame",
-            "price": 50,
-            "publisher": {
-                "balance": 1000,
-                "name": "ExamplePublisher1"
-            },
+            "price": 50.0,
+            "publisher": "ExamplePublisher1",
             "release_date": "01-01-2024",
             "reviews": [],
             "versions": [
@@ -35,11 +32,8 @@
                 "Adventure"
             ],
             "name": "ExampleGame2",
-            "price": 100,
-            "publisher": {
-                "balance": 500,
-                "name": "ExamplePublisher2"
-            },
+            "price": 100.0,
+            "publisher": "ExamplePublisher2",
             "release_date": "01-02-2024",
             "reviews": [],
             "versions": [
@@ -56,11 +50,8 @@
                 "Adventure"
             ],
             "name": "ExampleGame3",
-            "price": 1000,
-            "publisher": {
-                "balance": 500,
-                "name": "ExamplePublisher2"
-            },
+            "price": 1000.0,
+            "publisher": "ExamplePublisher2",
             "release_date": "01-02-2024",
             "reviews": [],
             "versions": [
@@ -81,7 +72,7 @@
     ],
     "players": [
         {
-            "balance": 100,
+            "balance": 100.3,
             "library": {
                 "games": [
                     "ExampleGame2",
@@ -91,17 +82,17 @@
             "name": "Player1",
             "transactions": [
                 {
-                    "amount": 50,
-                    "date": "2026-05-06T09:35:26.765Z",
+                    "amount": 50.0,
+                    "date": "06-05-2026 09:35:26",
                     "game": "ExampleGame",
-                    "id": "Player1 buys ExampleGame",
+                    "id": "Player1_buys_ExampleGame",
                     "successful": true
                 },
                 {
-                    "amount": 45,
-                    "date": "2026-05-06T09:37:39.098Z",
+                    "amount": 45.0,
+                    "date": "06-05-2026 09:37:39",
                     "game": "ExampleGame",
-                    "id": "Player1 buys ExampleGame",
+                    "id": "Player1_buys_ExampleGame",
                     "successful": true
                 }
             ]
@@ -109,11 +100,11 @@
     ],
     "publishers": [
         {
-            "balance": 1000,
+            "balance": 1000.0,
             "name": "ExamplePublisher1"
         },
         {
-            "balance": 500,
+            "balance": 500.0,
             "name": "ExamplePublisher2"
         }
     ],

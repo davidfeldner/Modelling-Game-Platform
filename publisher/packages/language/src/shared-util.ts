@@ -53,57 +53,61 @@ export class UtilService {
 
 
     buildPlayerModelFromDBModel(db: databaseModel, userID: string) {
-        //const dbPlayer = db.players.find(p => p.name == userID)
-        //const player = {
-        //    name: dbPlayer.name,
-        //    balance: dbPlayer.balance,
-        //    library: {
-        //        games: dbPlayer.library.games.map(),
-        //    },
-        //    transactions: dbPlayer.transactions.map(),
-        //};
-//
-        //const games = db.games.map(g => {
-        //    return {
-        //        name: g.name,
-        //        genres: g.genres.map(),
-        //        publisher: g.publisher,
-        //        price: g.price,
-        //        release_date: g.release_date,
-        //        versions: g.versions.map(),
-        //    };
-        //});
-//
-        //const publishers = db.publishers.map(p => {
-        //    return {
-        //        name: p.name,
-        //    };
-        //});
-//
-        //const genres = db.genres.map(g => {
-        //    return {
-        //        name: g.name,
-        //        description: g.description,
-        //    };
-        //});
-//
-        //const sales = db.sales.map(s => {
-        //    return {
-        //        name: s.name,
-        //        start_date: s.start_date,
-        //        end_date: s.end_date,
-        //        discounts: s.discounts.map(),
-        //    };
-        //});
-//
-        //const discounts = db.discounts.map(d => {
-        //    return {
-        //        name: d.name,
-        //        game: d.game,
-        //        percentage: d.percentage,
-        //        start_date: d.start_date,
-        //        end_date: d.end_date,
-        //    };
-        //});
+        const dbPlayer = db.players.find(p => p.name == userID);
+        if (!dbPlayer) return undefined;
+
+        const games = db.games.map(g => ({
+            name: g.name,
+            genres: g.genres.map(genre => ({ name: genre })),
+            publisher: { name: g.publisher },
+            price: g.price,
+            release_date: g.release_date,
+            versions: g.versions.map(v => ({ name: v.version_id, game_files: v.game_files })),
+            reviews: (g.reviews || []).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: { name: r.author.name } }))
+        }));
+
+        const publishers = db.publishers.map(p => ({ name: p.name }));
+
+        const genres = db.genres.map(g => ({ name: g.name, description: g.description }));
+
+        const sales = db.sales.map(s => ({ name: s.name, start_date: s.start_date, end_date: s.end_date, discounts: s.discounts.map(discount => ({ name: discount })) }));
+
+        const discounts = db.discounts.map(d => ({ name: d.name, game: d.game, percentage: d.percentage, start_date: d.start_date, end_date: d.end_date }));
+
+        const player = {
+            name: dbPlayer.name,
+            balance: dbPlayer.balance,
+            library: {
+                games: (dbPlayer.library?.games || []).map(g => ({ name: g }))
+            },
+            transactions: (dbPlayer.transactions || []).map(t => ({ id: t.id, successful: t.successful, date: t.date, amount: t.amount, game: { name: t.game.name } }))
+        };
+
+        return {
+            player,
+            games,
+            publishers,
+            genres,
+            sales,
+            discounts
+        };
+    }
+
+    buildPlayerGame(dbGame: GameType) {
+        return {
+            name: dbGame.name,
+            release_date: dbGame.release_date,
+            price: dbGame.price,
+            versions: dbGame.versions,
+            publisher: dbGame.publisher,
+            genres: dbGame.genres,
+        };
+    }
+
+    buildPlayerGenre(dbGenre: GenreType) {
+        return {
+            name: dbGenre.name,
+            description: dbGenre.description,
+        };
     }
 }

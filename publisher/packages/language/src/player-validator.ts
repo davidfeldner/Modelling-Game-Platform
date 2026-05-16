@@ -3,7 +3,6 @@ import { AstUtils, Reference, type ValidationAcceptor, type ValidationChecks } f
 import { PlayerModel, PlayerGameType, PlayerLibraryType, PlayerType, PlayerReviewType, type PublisherAstType, PlayerDiscountType, PlayerVersionType, PlayerGenreType } from './generated/ast.js';
 import { type SharedServices } from './shared-module.js';
 import type { databaseModel, DiscountType, GameType, GenreType, GenreTypeName, VersionType } from './db-model.d.ts';
-//import { getDiscountedPrice } from './shared-util.js';
 
 /**
  * Register custom validation checks.
@@ -20,7 +19,7 @@ export function registerValidationChecksPlayer(services: SharedServices) {
             validator.checkLibraryChange,
         ],
         PlayerModel: [
-            validator.checkNoUnauthorizedChanges,
+            //validator.checkNoUnauthorizedChanges,
         ],
     };
     registry.register(checks, validator);
@@ -71,8 +70,6 @@ export class PlayerValidator {
             }
         }
     }
-
-
 
 
     checkGameChange(game: PlayerGameType, accept: ValidationAcceptor): void {
@@ -223,15 +220,7 @@ export class PlayerValidator {
             return;
         }
 
-        const dbPlayer = db.players.find(p => p.name === model.player.name);
-        const dbModel = {
-            player: dbPlayer,
-            games: db.games,
-            genres: db.genres,
-            sales: db.sales,
-            discounts: db.discounts,
-            publishers: db.publishers
-        };
+        const dbModel = this.services.util.UtilService.buildPlayerModelFromDBModel(db, model.player.name);
         const allowed = [
             'player.balance',
             'player.library.games[*]',
@@ -243,45 +232,80 @@ export class PlayerValidator {
 
     assertNoUnauthorizedChanges(modelNode: any, dbModelNode: any, allowed: string[], accept: ValidationAcceptor, nodeForReport: any, path = ''): void {
         if (this.matches(path, allowed)) {
-            return
-        };
-
-        if (this.isLangiumRef(modelNode) || this.isLangiumRef(dbModelNode) || modelNode == null || dbModelNode == null || typeof modelNode !== 'object' || typeof dbModelNode !== 'object') {
-            if (this.norm(modelNode) !== this.norm(dbModelNode)) {
-                accept('error', 'Editing value not allowed', { node: nodeForReport })
-            };
             return;
         }
 
-        if (Array.isArray(modelNode) || Array.isArray(dbModelNode)) {
-            const a = Array.isArray(modelNode) ? modelNode : [];
-            const b = Array.isArray(dbModelNode) ? dbModelNode : [];
-            for (let i = 0; i < Math.max(a.length, b.length); i++) {
-                this.assertNoUnauthorizedChanges(a[i], b[i], allowed, accept, nodeForReport, `${path}[${i}]`);
+        if (modelNode == null || dbModelNode == null || typeof modelNode !== 'object' || typeof dbModelNode !== 'object' || this.isLangiumRef(modelNode) || this.isLangiumRef(dbModelNode)) {
+            if (this.norm(modelNode) !== this.norm(dbModelNode)) {
+                accept('error', `Editing value not allowed ${modelNode} vs ${dbModelNode}`, { node: nodeForReport });
             }
             return;
         }
 
-        for (const k of new Set([...Object.keys(modelNode || {}), ...Object.keys(dbModelNode || {})])) {
-            if (k.startsWith('$')) continue;
-            this.assertNoUnauthorizedChanges(modelNode[k], dbModelNode[k], allowed, accept, nodeForReport, path ? `${path}.${k}` : k);
+        if (Array.isArray(modelNode) || Array.isArray(dbModelNode)) {
+            const modelArray = Array.isArray(modelNode) ? modelNode : [];
+            const dbArray = Array.isArray(dbModelNode) ? dbModelNode : [];
+            const maxLength = Math.max(modelArray.length, dbArray.length);
+            for (let i = 0; i < maxLength; i++) {
+                this.assertNoUnauthorizedChanges(
+                    modelArray[i],
+                    dbArray[i],
+                    allowed,
+                    accept,
+                    modelArray[i] ?? nodeForReport,
+                    `${path}[${i}]`
+                );
+            }
+            return;
+        }
+
+        // Use DB keys as the authoritative basis. First check keys present in DB (detect deletions/edits),
+        // then detect any extra keys in the model (additions).
+        const dbKeys = Object.keys(dbModelNode || {});
+        const modelKeys = Object.keys(modelNode || {}).filter(k => !k.startsWith('$'));
+
+        for (const k of dbKeys) {
+            this.assertNoUnauthorizedChanges(
+                modelNode && k in modelNode ? modelNode[k] : undefined,
+                dbModelNode[k],
+                allowed,
+                accept,
+                modelNode && k in modelNode ? modelNode[k] : nodeForReport,
+                path ? `${path}.${k}` : k
+            );
+        }
+
+        for (const k of modelKeys) {
+            if (dbKeys.includes(k)) continue;
+            this.assertNoUnauthorizedChanges(
+                modelNode[k],
+                undefined,
+                allowed,
+                accept,
+                modelNode[k] ?? nodeForReport,
+                path ? `${path}.${k}` : k
+            );
         }
     }
 
 
     matches(path: string, allowed: string[]) {
-        return allowed.some(p => {
-            p === path || new RegExp('^' + p.replace(/\./g, '\\.').replace(/\[\*\]/g, '\\[[0-9]+\\]')).test(path)
-        });
+        return allowed.some(p => p === path || new RegExp('^' + p.replace(/\./g, '\\.').replace(/\[\*\]/g, '\\[[0-9]+\\]')).test(path));
     }
 
 
     isLangiumRef(x: any): x is langium.Reference<any> {
-        return x && 'ref' in x;
+        return x && typeof x === 'object' && 'ref' in x;
     }
 
 
     norm(x: any) {
-        return this.isLangiumRef(x) ? x.ref : x;
+        if (this.isLangiumRef(x)) return this.norm(x.ref);
+        if (x == null) return x;
+        if (typeof x !== 'object') return x;
+        // Prefer common identity fields for comparison
+        if ('name' in x && typeof x.name === 'string') return x.name;
+        if ('id' in x && typeof x.id === 'string') return x.id;
+        return x;
     }
 }

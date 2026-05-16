@@ -180,7 +180,7 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
     const player = db.players.find(p => p.name == userID)
     if (!player) throw new Error(`Player with name ${userID} not found in DB`);
     dsl += `player ${`${player.name}`}\n`;
-    dsl += `\tbalance ${player.balance}\n`;
+    dsl += `\tbalance ${player.balance.toFixed(1)}\n`;
     dsl += `\tlibrary [${player.library.games.join(', ')}]\n`;
     dsl += `\ttransactions\n\t${player.transactions.map(t => globalTransactionDSL(t)).join(', \n\t')}\n\n`;
 
@@ -200,7 +200,7 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
             dsl += `game ${`${game.name}`}\n`;
             dsl += `\tgenres ${game.genres.join(', ')}\n`;
             dsl += `\tpublisher ${`${game.publisher}`}\n`;
-            dsl += `\tprice ${game.price}\n`;
+            dsl += `\tprice ${game.price.toFixed(1)}\n`;
             dsl += `\trelease_date ${game.release_date}\n`;
             dsl += `\tversions ${game.versions?.filter(v => v.is_current).map(v => `version_id "${v.version_id}" game_files "${v.game_files}"`).join(', ')}\n`;
             if (game.reviews?.length != 0) {

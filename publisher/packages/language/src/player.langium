@@ -83,7 +83,7 @@ PlayerGenre returns PlayerGenreType:
 Transaction returns PlayerTransactionType:
     'transaction' 'id' id=ID
     'successful' successful=BOOLEAN
-    'date' date=DATE
+    'date' date=DATETIME
     'amount' amount=FLOAT
     'game' game=[PlayerGameType:ID];
 

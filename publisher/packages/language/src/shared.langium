@@ -5,6 +5,7 @@ interface NamedElement {
 
 
 terminal BOOLEAN returns boolean: 'true' | 'false';
+terminal DATETIME: /\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}/;
 terminal DATE: /\d{2}-\d{2}-\d{4}/;
 hidden terminal WS: /\s+/;
 terminal ID: /[_a-zA-Z][\w_]*/;
