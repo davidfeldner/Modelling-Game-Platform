@@ -1,25 +1,11 @@
-player Player1
-	balance 0
-	library [ExampleGame2, ExampleGame, ExampleGame4]
-	transactions
-		transaction id Player1_buys_ExampleGame2
-		successful true
-		date 06-05-2026 09:35:26
-		amount 50
-		game ExampleGame2, 
-		transaction id Player1_buys_ExampleGame
-		successful true
-		date 06-05-2026 09:37:39
-		amount 45
-		game ExampleGame, 
-		transaction id Player1_buys_ExampleGame4
-		successful true
-		date 16-05-2026 17:53:04
-		amount 10000
-		game ExampleGame4
+administrator Admin1
 
 publisher ExamplePublisher1
+	balance 1000
+
 publisher ExamplePublisher2
+	balance 500
+
 genre Adventure
 	description "Adventure is fun"
 
@@ -31,35 +17,39 @@ game ExampleGame
 	publisher ExamplePublisher1
 	price 50
 	release_date 01-01-2024
-	versions version_id "1.0" game_files "game1.exe"
+	versions version_id "1.0" game_files "game1.exe" is_current true approved true
 
 game ExampleGame2
 	genres Adventure
 	publisher ExamplePublisher2
 	price 100
 	release_date 01-02-2024
-	versions version_id "1.0" game_files "game2.exe"
+	versions version_id "1.0" game_files "game2.exe" is_current true approved true
 
 game ExampleGame3
 	genres Adventure
 	publisher ExamplePublisher2
 	price 1000
 	release_date 01-02-2024
-	versions version_id "1.0" game_files "game3.exe"
+	versions version_id "1.0" game_files "game3.exe" is_current true approved true
 
 game ExampleGame4
 	genres Adventure
 	publisher ExamplePublisher2
 	price 10000
 	release_date 01-02-2024
-	versions version_id "1.0" game_files "game4.exe"
+	versions version_id "1.0" game_files "game4.exe" is_current true approved true
 
 game ExampleGame5
 	genres Adventure
 	publisher ExamplePublisher1
 	price 50
 	release_date 01-01-2024
-	versions version_id "1.0" game_files "game1.exe"
+	versions version_id "1.0" game_files "game1.exe" is_current true approved true
+
+approval request game ExampleGame5
+	version "1.0"
+	status APPROVED
 
 discount ExampleDiscount1
 	percentage 10

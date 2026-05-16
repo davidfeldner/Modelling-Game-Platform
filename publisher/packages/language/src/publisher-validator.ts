@@ -12,7 +12,6 @@ export function registerValidationChecksPublisher(services: SharedServices) {
         PublisherModel: validator.checkGamesChanges,
         PublisherDiscountType: validator.checkDiscountsDoNotOverlap,
         PublisherSaleType: validator.checkDiscountPeriodsWithinSalePeriod,
-        PublisherVersionType: validator.checkCurrentVersionIsApproved
     };
     registry.register(checks, validator);
 }
@@ -29,6 +28,8 @@ export function registerValidationChecksPublisher(services: SharedServices) {
 export class PublisherValidator {
     constructor(private services: SharedServices) { }
 
+    //TODO - check that publisher cannot create a game with a name that already exists
+
     checkGamesChanges(model: PublisherModel, accept: ValidationAcceptor): void {
         const publisherName = model.publisher.name
 
@@ -39,7 +40,7 @@ export class PublisherValidator {
         }
 
         const modelGames = model.games.map(g => g.name);
-        const dbGames = db.games.map(g => g.name); 
+        const dbGames = db.games.filter(g => g.publisher === publisherName).map(g => g.name); 
 
         const removedGames = dbGames.filter(g => !modelGames.includes(g))
         if (removedGames.length != 0 ){
@@ -53,8 +54,8 @@ export class PublisherValidator {
             this.checkNewGame(newGame, accept)
             
         })
-
     }
+
 
     checkNewGame(game: PublisherGameType, accept: ValidationAcceptor): void {
         // price
@@ -76,10 +77,6 @@ export class PublisherValidator {
         const initVersion = game.versions[0]
         if (initVersion.approved) {
             accept('error', 'Initial version must be unapproved', { node: initVersion, property: "approved"});
-        }
-        if (initVersion.is_current){
-            accept('error', 'Initial version cannot be current until it is approved', { node: initVersion, property: "is_current"});
-
         }
 
         // reviews
@@ -124,13 +121,6 @@ export class PublisherValidator {
                 accept('error', 'Discount periods in a sale event must be within the sale\'s period.', { node: discount.ref });
                 break;
             }
-        }
-    }
-
-    checkCurrentVersionIsApproved(version: PublisherVersionType, accept: ValidationAcceptor): void {
-        if (version.is_current && !version.approved){
-            accept('error', 'Current version must be approved', { node: version, property: 'is_current' });
-
         }
     }
 }

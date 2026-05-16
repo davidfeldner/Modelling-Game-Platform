@@ -69,7 +69,7 @@ Publisher returns PublisherType:
 
 Player returns PlayerType:
     'player' name=ID
-    'balance' balance=FLOAT
+    'balance' balance=NUMBER
     'library' library=Library
     ('transactions' transactions+=Transaction (',' transactions+=Transaction)*)?;
 
@@ -84,14 +84,14 @@ Transaction returns PlayerTransactionType:
     'transaction' 'id' id=ID
     'successful' successful=BOOLEAN
     'date' date=DATETIME
-    'amount' amount=FLOAT
+    'amount' amount=NUMBER
     'game' game=[PlayerGameType:ID];
 
 PlayerGame returns PlayerGameType:
     'game' name=ID
     'genres' genres+=[PlayerGenreType:ID] (',' genres+=[PlayerGenreType:ID])*
     'publisher' publisher=[PublisherType:ID]
-    'price' price=FLOAT
+    'price' price=NUMBER
     'release_date' release_date=DATE
     'versions' versions+=PlayerVersion  (',' versions+=PlayerVersion)*
     ('reviews' reviews+=Review  (',' reviews+=Review)*)?;
@@ -113,7 +113,7 @@ PlayerSale returns PlayerSaleType:
 
 PlayerDiscount returns PlayerDiscountType:
     'discount' name=ID
-    'percentage' percentage=INT
+    'percentage' percentage=NUMBER
     'start_date' start_date=DATE
     'end_date' end_date=DATE
     'game' game=[PlayerGameType:ID];

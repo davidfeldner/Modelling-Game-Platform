@@ -9,7 +9,6 @@ import {
 import { PublisherValidator, registerValidationChecksPublisher } from './publisher-validator.js';
 import { AdministratorValidator, registerValidationChecksAdministrator } from './administrator-validator.js';
 import { PlayerValidator, registerValidationChecksPlayer } from './player-validator.js';
-import { databaseModel } from './db-model.js';
 import { DatabaseService } from './db-service.js';
 import { SharedScopeProvider } from './shared-scope-provider.js';
 import { UtilService } from './shared-util.js';

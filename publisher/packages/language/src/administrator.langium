@@ -70,7 +70,7 @@ AdministratorGame returns AdministratorGameType:
     'game' name=ID
     'genres' genres+=[AdministratorGenreType:ID] (',' genres+=[AdministratorGenreType:ID])*
     'publisher' publisher=[AdministratorPublisherType:ID]
-    'price' price=FLOAT
+    'price' price=NUMBER
     'release_date' release_date=DATE
     'versions' versions+=AdministratorVersion (',' versions+=AdministratorVersion)*
     ('reviews' reviews+=AdministratorReview (',' reviews+=AdministratorReview)*)?;
@@ -80,8 +80,9 @@ AdministratorGenre returns AdministratorGenreType:
     'description' description=STRING;
 
 GameApprovalRequest returns AdministratorGameApprovalRequestType:
-    'approval' 'request' 'game' game=[AdministratorGameType:ID] 'version' game_version=[AdministratorVersionType:ID] 'status' status=STRING;
-
+    'approval' 'request' 'game' game=[AdministratorGameType:ID]
+    'version' game_version=[AdministratorVersionType:STRING]
+    'status' status=('PENDING' | 'APPROVED' | 'REJECTED');
 
 AdministratorVersion returns AdministratorVersionType:
     'version_id' name=STRING
@@ -97,7 +98,7 @@ AdministratorSale returns AdministratorSaleType:
 
 AdministratorDiscount returns AdministratorDiscountType:
     'discount' name=ID
-    'percentage' percentage=INT
+    'percentage' percentage=NUMBER
     'start_date' start_date=DATE
     'end_date' end_date=DATE
     'game' game=[AdministratorGameType:ID];
@@ -108,7 +109,7 @@ AdministratorReview returns AdministratorReviewType:
     'is_flagged' is_flagged=BOOLEAN;
 
 AdministratorPublisher returns AdministratorPublisherType:
-    'publisher' name=ID 'balance' balance=FLOAT;
+    'publisher' name=ID 'balance' balance=NUMBER;
 
 AdministratorPlayer returns AdministratorPlayerType:
-    'player' name=ID 'balance' balance=FLOAT;
+    'player' name=ID 'balance' balance=NUMBER;

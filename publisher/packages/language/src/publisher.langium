@@ -65,14 +65,14 @@ Game returns PublisherGameType:
     'game' name=ID
     'genres' genres+=[PublisherGenreType:ID] (',' genres+=[PublisherGenreType:ID])*
     'publisher' publisher=[PublisherType:ID]
-    'price' price=FLOAT
+    'price' price=NUMBER
     'release_date' release_date=DATE
     'versions' versions+=Version (',' versions+=Version)*
     ('reviews' reviews+=Review  (',' reviews+=Review)*)?;
 
 
 Publisher returns PublisherType:
-    'publisher' name=ID 'balance' balance=FLOAT;
+    'publisher' name=ID 'balance' balance=NUMBER;
 
 Version returns PublisherVersionType:
     'version_id' name=STRING
@@ -87,7 +87,7 @@ Review returns PublisherReviewType:
 
 Discount returns PublisherDiscountType:
     'discount' name=ID
-    'percentage' percentage=INT
+    'percentage' percentage=NUMBER
     'start_date' start_date=DATE
     'end_date' end_date=DATE
     'game' game=[PublisherGameType:ID];

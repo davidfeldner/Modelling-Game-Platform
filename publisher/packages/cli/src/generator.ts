@@ -1,10 +1,12 @@
-import type { PublisherModel, PlayerModel, AdministratorModel, SharedServices } from 'publisher-language';
-import { expandToNode, toString } from 'langium/generate';
+import type { PublisherModel, PlayerModel, AdministratorModel } from 'publisher-language';
 import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { globalDiscountDSL, globalGenreDSL, globalReviewDSL, globalTransactionDSL, validateDBNotEmpty } from './util.js';
-//import { getDiscountedPrice } from '../../language/src/shared-util.js'
+import { globalDiscountDSL, globalGenreDSL, globalReviewDSL, globalTransactionDSL, validateDBNotEmpty, formatDateTime } from './util.js';
+import { UtilService } from '../../language/out/shared-util.js'
 import { databaseModel } from '../../language/src/db-model.js';
+
+const services = {
+    utilService: new UtilService(),
+};
 
 function getCurrentDB(dbPath: string): databaseModel {
     const dbData = fs.existsSync(dbPath) ? fs.readFileSync(dbPath).toString() : '{}';
@@ -17,9 +19,59 @@ function saveDBSnapshotForClient(snapshot: databaseModel, userID: string) {
     fs.writeFileSync(snapshotPath, JSON.stringify(snapshot));
 }
 
-export function pushToDBPublisher(model: PublisherModel, dest?: string): string {
-    const dbPath = dest || './db.json';
+export function pushToDBPlayer(model: PlayerModel, dbPath='./db.json'): string {
     const db = getCurrentDB(dbPath);
+    console.log("Pushing player to DB");
+
+    let savedPlayer = db.players.find(p => p.name === model.player.name);
+    let resolvedBalance = Math.max(model.player.balance, 0);
+    // Add player if they do not exist in DB
+    if (!savedPlayer) {
+        let savedPlayer = {
+            name: model.player.name,
+            balance: resolvedBalance,
+            library: { games: [] },
+            transactions: []
+        }
+        db.players.push(savedPlayer);
+    } else if (resolvedBalance >= savedPlayer.balance) {
+        savedPlayer.balance = resolvedBalance;
+    }
+
+    const ownedGames = savedPlayer.library.games;
+    const newGamesReferences = model.player.library.games.filter(g => !ownedGames.includes(g.ref.name));
+    const newGames = newGamesReferences.map(g => db.games.find(game => game.name === g.ref.name));
+
+    const totalCost = newGames.reduce((sum, g) => sum + g.price, 0);
+    if (savedPlayer.balance >= totalCost) {
+        const transactions = newGames.map(g => {
+            const gamePrice = services.utilService.getDiscountedPrice(g, db.sales, db.discounts);
+            return {
+                id: `${model.player.name}_buys_${g.name}`,
+                date: formatDateTime(new Date()),
+                successful: true,
+                amount: gamePrice,
+                game: g.name
+            };
+        });
+
+        savedPlayer.transactions.push(...transactions);
+        savedPlayer.library.games.push(...newGames.map(g => g.name));
+
+        savedPlayer.balance -= totalCost;
+    }
+
+    //TODO review save
+
+    const updates: databaseModel = { ...db };
+
+    fs.writeFileSync(dbPath, JSON.stringify(updates));
+    return dbPath;
+}
+
+export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): string {
+    const db = getCurrentDB(dbPath);
+    console.log("Pushing publisher to DB");
 
     let savedPublisher = db.publishers.find(p => p.name === model.publisher.name);
     let resolvedBalance = Math.max(model.publisher.balance, 0);
@@ -46,72 +98,49 @@ export function pushToDBPublisher(model: PublisherModel, dest?: string): string 
         };
     });
 
+    const games = createdGames.map(g => {
+        const game = {
+            name: g.name,
+            release_date: g.release_date,
+            price: g.price,
+            versions: g.versions.map(v => ({
+                version_id: v.name,
+                game_files: v.game_files,
+                is_current: v.is_current,
+                approved: false
+            })),
+            genres: g.genres.map(genre => genre.ref.name),
+            publisher: model.publisher.name,
+            reviews: []
+        }
+        return game;
+    });
+
+    db.games.push(...games);
     db.requests.push(...requests)
 
-    const existingGenres = db.genres.map(g => g.name)
-    const createdGenres = model.genres.filter(g => !existingGenres.includes(g.name))
+    const existingGenres = db.genres.map(g => g.name);
+    const createdGenres = model.genres
+    .filter(g => !existingGenres.includes(g.name))
+    .map(g => ({
+        name: g.name,
+        description: g.description
+    }));
 
-    db.genres.push(...createdGenres)
+    db.genres.push(...createdGenres);
 
     const updates: databaseModel = { ...db };
+
+    console.dir(db, { depth: null });
+    console.dir(updates, { depth: null });
 
     fs.writeFileSync(dbPath, JSON.stringify(updates));
     return dbPath;
 }
 
-export function pushToDBPlayer(model: PlayerModel, dest?: string): string {
-    const dbPath = dest || './db.json';
+export function pushToDBAdministrator(model: AdministratorModel, dbPath='./db.json'): string {
     const db = getCurrentDB(dbPath);
-    console.log("Pushing player to DB");
-
-    let savedPlayer = db.players.find(p => p.name === model.player.name);
-    let resolvedBalance = Math.max(model.player.balance, 0);
-    // Add player if they do not exist in DB
-    if (!savedPlayer) {
-        let savedPlayer = {
-            name: model.player.name,
-            balance: resolvedBalance,
-            library: { games: [] },
-            transactions: []
-        }
-        db.players.push(savedPlayer);
-    } else if (resolvedBalance >= savedPlayer.balance) {
-        savedPlayer.balance = resolvedBalance;
-    }
-
-    const ownedGames = savedPlayer.library.games;
-    const newGamesReferences = model.player.library.games.filter(g => !ownedGames.includes(g.ref.name));
-    const newGames = newGamesReferences.map(g => db.games.find(game => game.name === g.ref.name));
-
-    const totalCost = newGames.reduce((sum, g) => sum + g.price, 0);
-    if (savedPlayer.balance >= totalCost) {
-        const transactions = newGames.map(g => {
-            const gamePrice = this.services.util.UtilService.getDiscountedPrice(g, db.sales, db.discounts);
-            return {
-                id: `${model.player.name}_buys_${g.name}`,
-                date: new Date().toLocaleDateString("en-DE"),
-                successful: true,
-                amount: gamePrice,
-                game: g.name
-            };
-        });
-
-        savedPlayer.transactions.push(...transactions);
-        savedPlayer.library.games.push(...newGames.map(g => g.name));
-
-        savedPlayer.balance -= totalCost;
-    }
-
-    const updates: databaseModel = { ...db };
-
-    fs.writeFileSync(dbPath, JSON.stringify(updates));
-    return dbPath;
-}
-
-export function pushToDBAdministrator(model: AdministratorModel, dest?: string): string {
-    const dbPath = dest || './db.json';
-    const db = getCurrentDB(dbPath);
-
+    console.log("Pushing administrator to DB");
 
     let savedAdministrator = db.administrators.find(a => a.name === model.administrator.name);
     // Add administrator if they do not exist in DB
@@ -129,7 +158,7 @@ export function pushToDBAdministrator(model: AdministratorModel, dest?: string):
         !alreadyApprovedRequests.some(ar => ar.game === r.game.ref.name && ar.game_version === r.game_version.ref.name))
 
     const newlyRejectedRequests = model.requests.filter(r => r.status === 'REJECTED' &&
-        !alreadyApprovedRequests.some(ar => ar.game === r.game.ref.name && ar.game_version === r.game_version.ref.name))
+        !alreadyRejectedRequests.some(ar => ar.game === r.game.ref.name && ar.game_version === r.game_version.ref.name))
 
     newlyApprovedRequests.forEach(req => {
         const game = db.games.find(g => g.name === req.game.ref.name)
@@ -137,6 +166,7 @@ export function pushToDBAdministrator(model: AdministratorModel, dest?: string):
             v => v.version_id === req.game_version.ref.name
         )
         version.approved = true
+        db.requests.find(r => r.game === req.game.ref.name && r.game_version === req.game_version.ref.name).status = 'APPROVED';
     })
 
     newlyRejectedRequests.forEach(req => {
@@ -145,6 +175,7 @@ export function pushToDBAdministrator(model: AdministratorModel, dest?: string):
             v => v.version_id === req.game_version.ref.name
         )
         version.approved = false
+        db.requests.find(r => r.game === req.game.ref.name && r.game_version === req.game_version.ref.name).status = 'REJECTED';
     })
 
     const updates: databaseModel = { ...db };
@@ -153,8 +184,7 @@ export function pushToDBAdministrator(model: AdministratorModel, dest?: string):
     return dbPath;
 }
 
-export function generateFromDB(fileType: string, userID: string, dest?: string): string {
-    const dbPath = dest || './db.json';
+export function generateFromDB(fileType: string, userID: string, dbPath='./db.json', clientFilePath?: string): string {
     const json: databaseModel = getCurrentDB(dbPath);
     saveDBSnapshotForClient(json, userID);
     validateDBNotEmpty(json);
@@ -169,7 +199,7 @@ export function generateFromDB(fileType: string, userID: string, dest?: string):
     } else {
         throw new Error(`Unknown file type: ${fileType}`);
     }
-    const path = dest || `./${fileType}_${userID}.${fileType}`;
+    const path = clientFilePath || `./${fileType}_${userID}.${fileType}`;
     fs.writeFileSync(path, generatedFile);
     return path;
 }
@@ -180,7 +210,7 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
     const player = db.players.find(p => p.name == userID)
     if (!player) throw new Error(`Player with name ${userID} not found in DB`);
     dsl += `player ${`${player.name}`}\n`;
-    dsl += `\tbalance ${player.balance.toFixed(1)}\n`;
+    dsl += `\tbalance ${player.balance}\n`;
     dsl += `\tlibrary [${player.library.games.join(', ')}]\n`;
     dsl += `\ttransactions\n\t${player.transactions.map(t => globalTransactionDSL(t)).join(', \n\t')}\n\n`;
 
@@ -196,11 +226,11 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
 
     db.games.forEach(game => {
         // only show games that have a current version (hide unpublished games)
-        if (game.versions.some(v => v.is_current)){
+        if (game.versions.some(v => v.is_current && v.approved)) {
             dsl += `game ${`${game.name}`}\n`;
             dsl += `\tgenres ${game.genres.join(', ')}\n`;
             dsl += `\tpublisher ${`${game.publisher}`}\n`;
-            dsl += `\tprice ${game.price.toFixed(1)}\n`;
+            dsl += `\tprice ${game.price}\n`;
             dsl += `\trelease_date ${game.release_date}\n`;
             dsl += `\tversions ${game.versions?.filter(v => v.is_current).map(v => `version_id "${v.version_id}" game_files "${v.game_files}"`).join(', ')}\n`;
             if (game.reviews?.length != 0) {
@@ -236,7 +266,7 @@ function generatePublisherFile(db: databaseModel, userID: string): string {
     const publisherGames = db.games.filter(game => game.publisher == publisher.name)
     publisherGames.forEach(game => {
         dsl += `game ${game.name}\n`;
-        dsl += `\tgenres ${game.genres.join(', ')}\n\n`;
+        dsl += `\tgenres ${game.genres.join(', ')}\n`;
         dsl += `\tpublisher ${game.publisher}\n`;
         dsl += `\tprice ${game.price}\n`;
         dsl += `\trelease_date ${game.release_date}\n`;
@@ -279,7 +309,7 @@ function generateAdministratorFile(db: databaseModel, userID: string): string {
 
     db.publishers.forEach(p => {
         dsl += `publisher ${p.name}\n`;
-        dsl += `balance ${p.balance}\n\n`;
+        dsl += `\tbalance ${p.balance}\n\n`;
     });
 
     db.genres.forEach(genre => {
@@ -301,8 +331,8 @@ function generateAdministratorFile(db: databaseModel, userID: string): string {
 
     db.requests.forEach(request => {
         dsl += `approval request game ${request.game}\n`;
-        dsl += `\tversion ${request.game_version}\n`;
-        dsl += `\tstatus ${request.status}\n`;
+        dsl += `\tversion "${request.game_version}"\n`;
+        dsl += `\tstatus ${request.status}\n\n`;
     });
 
     db.sales.forEach(sale => {

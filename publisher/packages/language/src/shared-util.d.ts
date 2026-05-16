@@ -1,6 +1,4 @@
-import * as langium from 'langium';
-import { databaseModel, DiscountType, GameType, GenreType, SaleType, TransactionType } from './db-model.js';
-import { PlayerType } from './generated/ast.js';
+import { databaseModel, DiscountType, GameType, GenreType, SaleType } from './db-model.js';
 
 export class UtilService {
     getDiscountedPrice(game: GameType, sales: SaleType[], standaloneDiscounts: DiscountType[]) {

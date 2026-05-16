@@ -1,8 +1,8 @@
 import * as langium from 'langium';
-import { AstUtils, Reference, type ValidationAcceptor, type ValidationChecks } from 'langium';
-import { PlayerModel, PlayerGameType, PlayerLibraryType, PlayerType, PlayerReviewType, type PublisherAstType, PlayerDiscountType, PlayerVersionType, PlayerGenreType } from './generated/ast.js';
+import { Reference, type ValidationAcceptor, type ValidationChecks } from 'langium';
+import { PlayerModel, PlayerGameType, PlayerLibraryType, PlayerType, PlayerReviewType, type PublisherAstType, PlayerVersionType, PlayerGenreType } from './generated/ast.js';
 import { type SharedServices } from './shared-module.js';
-import type { databaseModel, DiscountType, GameType, GenreType, GenreTypeName, VersionType } from './db-model.d.ts';
+import type { GameType, GenreTypeName, VersionType } from './db-model.ts';
 
 /**
  * Register custom validation checks.
@@ -19,7 +19,7 @@ export function registerValidationChecksPlayer(services: SharedServices) {
             validator.checkLibraryChange,
         ],
         PlayerModel: [
-            validator.checkNoUnauthorizedChanges,
+            //validator.checkNoUnauthorizedChanges,
         ],
     };
     registry.register(checks, validator);
