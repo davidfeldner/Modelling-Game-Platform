@@ -158,6 +158,16 @@ export class PublisherValidator {
                 accept('error', 'Publisher cannot remove existing game versions', { node: game, property: 'versions' });
             }
 
+            const addedVersionIds = game.versions.map(v => v.name).filter(id => !dbVersionIds.includes(id));
+            for (const versionId of addedVersionIds) {
+                const version = game.versions.find(v => v.name === versionId);
+                if (!version) continue;
+
+                if (version.approved) {
+                    accept('error', 'New version cannot be already approved', { node: version, property: 'approved' });
+                }
+            }
+
             // only one current version allowed per game
             const currentCount = game.versions.filter(v => v.approved && v.is_current).length;
             if (currentCount > 1) {
@@ -187,8 +197,8 @@ export class PublisherValidator {
         }
 
         // release date
-        const releaseTime = new Date(game.release_date).getTime()
-        const nowTime = new Date().getTime()
+        const releaseTime = this.services.util.UtilService.parseDate(game.release_date)?.getTime();
+        const nowTime = new Date().getTime();
         if (releaseTime > nowTime){
             accept('error', 'Game release date cannot be in the future', { node: game, property: "release_date"});
         }
@@ -218,27 +228,31 @@ export class PublisherValidator {
 
 
     checkDiscountsDoNotOverlap(discount: PublisherDiscountType, accept: ValidationAcceptor): void {
-        const container = discount.$container;
+        const discountStart = this.services.util.UtilService.parseDate(discount.start_date);
+        const discountEnd = this.services.util.UtilService.parseDate(discount.end_date);
+        if (discountStart > discountEnd) {
+            accept('error', 'Discount end must be after discount start', { node: discount });
+        }
 
+        const container = discount.$container;
         const allDiscounts = AstUtils.streamAllContents(container)
             .filter(isPublisherDiscountType)
-            .filter(d => d.game == discount.game)
+            .filter(d => d.game.ref.name == discount.game.ref.name)
             .toArray();
 
         for (const otherDiscount of allDiscounts) {
             if (otherDiscount !== discount) {
-                const otherStart = new Date(otherDiscount.start_date);
-                const otherEnd = new Date(otherDiscount.end_date);
-                const discountStart = new Date(discount.start_date);
-                const discountEnd = new Date(discount.end_date);
-                
-                if (discountStart < otherEnd && discountEnd > otherStart) {
+                const otherStart = this.services.util.UtilService.parseDate(otherDiscount.start_date);
+                const otherEnd = this.services.util.UtilService.parseDate(otherDiscount.end_date);
+
+                if ((discountStart < otherEnd && discountEnd > otherStart)) {
                     accept('error', 'Discount periods should not overlap.', { node: discount });
                     break;
                 }
             }
         }
     }
+
 
     checkDiscountPercentage(discount: PublisherDiscountType, accept: ValidationAcceptor): void {
         if (0 >= discount.percentage || discount.percentage >= 100){
@@ -248,12 +262,12 @@ export class PublisherValidator {
 
 
     checkDiscountPeriodsWithinSalePeriod(sale: PublisherSaleType, accept: ValidationAcceptor): void {
-        const saleStart = new Date(sale.start_date);
-        const saleEnd = new Date(sale.end_date);
+        const saleStart = this.services.util.UtilService.parseDate(sale.start_date);
+        const saleEnd = this.services.util.UtilService.parseDate(sale.end_date);
         
         for (const discount of sale.discounts) {      
-            const discountStart = new Date(discount.ref.start_date);
-            const discountEnd = new Date(discount.ref.end_date);
+            const discountStart = this.services.util.UtilService.parseDate(discount.ref.start_date);
+            const discountEnd = this.services.util.UtilService.parseDate(discount.ref.end_date);
 
             if (discountStart < saleStart || discountEnd > saleEnd) {
                 accept('error', 'Discount periods in a sale event must be within the sale\'s period.', { node: discount.ref });
@@ -293,16 +307,15 @@ export class PublisherValidator {
 
         const dbModel = this.services.util.UtilService.buildPublisherModelFromDBModel(db, model.publisher.name);
         const allowed = [
-            'publisher.balance',
-            'games[*].name',
-            'games[*].genres',
-            'games[*].price',
-            'games[*].release_date',
-            'games[*].versions',
-            'games[*].purchased_count',
-            'genres[*]',
-            'discounts[*]',
+            { path: 'publisher.balance', exactMatch: true },
+            { path: 'games[*]', exactMatch: true },
+            { path: 'games[*].genres[*]', exactMatch: false },
+            { path: 'games[*].price', exactMatch: true },
+            { path: 'games[*].release_date', exactMatch: true },
+            { path: 'games[*].versions[*]', exactMatch: false },
+            { path: 'genres[*]', exactMatch: false },
+            { path: 'discounts[*]', exactMatch: false },
         ];
-        this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, allowed, accept, model);
+        this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, accept, model, allowed);
     }
 }

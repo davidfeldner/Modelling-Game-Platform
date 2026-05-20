@@ -109,8 +109,8 @@ export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): st
         savedPublisher.balance = resolvedBalance;
     }
 
-    const existingGames = db.games.map(g => g.name)
-    const createdGames = model.games.filter(g => !existingGames.includes(g.name))
+    const existingGames = db.games.map(g => g.name);
+    const createdGames = model.games.filter(g => !existingGames.includes(g.name));
 
     const requests = createdGames.map(g => {
         const currentVersion = g.versions.filter(v => v.is_current)[0]
@@ -177,16 +177,13 @@ export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): st
         throw new Error("Publishers cannot remove discounts for games they do not publish");
     }
 
-    db.discounts = [
-        ...db.discounts.filter(d => incomingNames.has(d.name)),
-        ...added.map(d => ({
-            name: d.name,
-            game: d.game.ref.name,
-            percentage: d.percentage,
-            start_date: d.start_date,
-            end_date: d.end_date
-        }))
-    ];
+    db.discounts = model.discounts.map(d => ({
+        name: d.name,
+        game: d.game.ref.name,
+        percentage: d.percentage,
+        start_date: d.start_date,
+        end_date: d.end_date
+    }));
     
     const updates: databaseModel = { ...db };
 
@@ -247,21 +244,12 @@ export function pushToDBAdministrator(model: AdministratorModel, dbPath='./db.js
         })
     })
 
-
-    const existingNames = new Set(db.sales.map(d => d.name));
-    const incomingNames = new Set(model.sales.map(d => d.name));
-
-    const added = model.sales.filter(d => !existingNames.has(d.name));
-
-    db.sales = [
-        ...db.sales.filter(d => incomingNames.has(d.name)),
-        ...added.map(d => ({
-            name: d.name,
-            start_date: d.start_date,
-            end_date: d.end_date,
-            discounts: d.discounts.map(discount => discount.ref.name)
-        }))
-    ];
+    db.sales = model.sales.map(d => ({
+        name: d.name,
+        start_date: d.start_date,
+        end_date: d.end_date,
+        discounts: d.discounts.map(discount => discount.ref.name)
+    }));
 
     const updates: databaseModel = { ...db };
 
@@ -328,19 +316,18 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
 
     const player = db.players.find(p => p.name == userID)
     if (!player) throw new Error(`Player with name ${userID} not found in DB`);
+
+    const publishedGameNames = db.games.filter(g => g.versions.some(v => v.is_current && v.approved)).map(g => g.name);
     dsl += `player ${`${player.name}`}\n`;
     dsl += `\tbalance ${player.balance}\n`;
-    dsl += `\tlibrary [${player.library.games.join(', ')}]\n`;
+    dsl += `\tlibrary [${player.library.games.filter(g => publishedGameNames.includes(g)).join(', ')}]\n`;
     if (player.transactions.length != 0)
         dsl += `\ttransactions\n\t${player.transactions.map(t => globalTransactionDSL(t)).join(', \n\t')}`;
     dsl += `\n\n`;
-    
-
 
     db.publishers.map(p => p.name).forEach(publisherName => {
         dsl += `publisher ${publisherName}\n\n`;
     });
-
 
     db.genres.forEach(genre => {
         dsl += globalGenreDSL(genre)
@@ -348,7 +335,7 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
 
     db.games.forEach(game => {
         // only show games that have a current version (hide unpublished games)
-        if (game.versions.some(v => v.is_current && v.approved)) {
+        if (publishedGameNames.includes(game.name)) {
             dsl += `game ${`${game.name}`}\n`;
             dsl += `\tgenres ${game.genres.join(', ')}\n`;
             dsl += `\tpublisher ${`${game.publisher}`}\n`;
@@ -361,7 +348,6 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
             }
             dsl += `\n`
         }
-        
     });
 
     db.sales.forEach(sale => {
@@ -411,7 +397,7 @@ function generatePublisherFile(db: databaseModel, userID: string): string {
         dsl += `\tdiscounts ${sale.discounts.join(', ')}\n\n`;
     });
 
-    db.discounts.filter(discount => discount.game in publisherGameNames).forEach(discount => {
+    db.discounts.filter(discount => publisherGameNames.includes(discount.game)).forEach(discount => {
         dsl += globalDiscountDSL(discount)
     });
 

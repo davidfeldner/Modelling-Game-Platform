@@ -55,15 +55,18 @@ export class UtilService {
         const dbPlayer = db.players.find(p => p.name == userID);
         if (!dbPlayer) return undefined;
 
-        const games = db.games.map(g => ({
-            name: g.name,
-            genres: g.genres.map(genre => ({ name: genre })),
-            publisher: { name: g.publisher },
-            price: g.price,
-            release_date: g.release_date,
-            versions: g.versions.map(v => ({ name: v.version_id, game_files: v.game_files })),
-            reviews: (g.reviews || []).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: r.author }))
-        }));
+        const publishedGameNames = db.games.filter(g => g.versions.some(v => v.is_current && v.approved)).map(g => g.name);
+        const games = db.games
+            .filter(g => publishedGameNames.includes(g.name))
+            .map(g => ({
+                name: g.name,
+                genres: g.genres.map(genre => ({ name: genre })),
+                publisher: { name: g.publisher },
+                price: g.price,
+                release_date: g.release_date,
+                versions: g.versions.filter(v => v.is_current).map(v => ({ name: v.version_id, game_files: v.game_files })),
+                reviews: (g.reviews || []).filter(r => !r.is_flagged || r.author === userID).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: r.author }))
+            }));
 
         const publishers = db.publishers.map(p => ({ name: p.name }));
 
@@ -77,7 +80,7 @@ export class UtilService {
             name: dbPlayer.name,
             balance: dbPlayer.balance,
             library: {
-                games: (dbPlayer.library?.games || []).map(g => ({ name: g }))
+                games: (dbPlayer.library?.games || []).filter(g => publishedGameNames.includes(g)).map(g => ({ name: g }))
             },
             transactions: (dbPlayer.transactions || []).map(t => ({ id: t.id, successful: t.successful, date: t.date, amount: t.amount, game: { name: t.game } }))
         };
@@ -106,14 +109,18 @@ export class UtilService {
                 price: g.price,
                 release_date: g.release_date,
                 versions: g.versions.map(v => ({ name: v.version_id, game_files: v.game_files, is_current: v.is_current, approved: v.approved })),
-                reviews: (g.reviews || []).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: r.author }))
+                reviews: (g.reviews || []).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: r.author })),
+                purchased_count: g.purchased_count
             }));
+        const gameNames = games.map(g => g.name);
         
         const genres = db.genres.map(g => ({ name: g.name, description: g.description }));
 
         const sales = db.sales.map(s => ({ name: s.name, start_date: s.start_date, end_date: s.end_date, discounts: s.discounts.map(discount => ({ name: discount }))}));
 
-        const discounts = db.discounts.map(d => ({ name: d.name, game: d.game, percentage: d.percentage, start_date: d.start_date, end_date: d.end_date }));
+        const discounts = db.discounts
+            .filter(d => gameNames.includes(d.game))
+            .map(d => ({ name: d.name, game: d.game, percentage: d.percentage, start_date: d.start_date, end_date: d.end_date }));
 
         const publisher = {
             name: dbPublisher.name,
@@ -154,7 +161,7 @@ export class UtilService {
 
         const publishers = db.publishers.map(p => ({ name: p.name, balance: p.balance }));
 
-        const players = db.players.map(p => ({ name: p.name, balance: p.balance }));
+        const players = db.players.map(p => ({ name: p.name, balance: p.balance, transactions: (p.transactions || []).map(t => ({ id: t.id, successful: t.successful, date: t.date, amount: t.amount, game: { name: t.game } })) }));
         
         const administrator = {
             name: dbAdmin.name
@@ -173,12 +180,23 @@ export class UtilService {
     }
 
     
-    assertNoUnauthorizedChanges(modelNode: any, dbModelNode: any, allowed: string[], accept: ValidationAcceptor, nodeForReport: any, path = '', reportProperty?: string): void {        
-        if (this.matches(path, allowed)) {
+    assertNoUnauthorizedChanges(
+        modelNode: any,
+        dbModelNode: any,
+        accept: ValidationAcceptor,
+        nodeForReport: any,
+        allowed: { path: string, exactMatch: boolean }[],
+        path: string = '',
+        reportProperty?: string
+    ): void {
+        const matchingPath = this.findMatchingPath(path, allowed);
+        const isLeaf = this.isLeaf(modelNode) || this.isLeaf(dbModelNode);
+        // Break recursion if path is allowed and it's either a prefix path (whole subtree is allowed), or exact match and we're at a leaf node (primitive value)
+        if (matchingPath && (!matchingPath.exactMatch || isLeaf)) {
             return;
         }
 
-        if (this.isLeaf(modelNode) || this.isLeaf(dbModelNode)) {
+        if (isLeaf) {
             // Determine a suitable AST node for reporting: prefer the model's AST node,
             // otherwise fall back to the provided parent
             const reportNode = this.isAstNode(modelNode) ? modelNode : nodeForReport;
@@ -188,7 +206,6 @@ export class UtilService {
 
             // Addition: model has value, DB does not
             if (modelNode !== undefined && dbModelNode === undefined) {
-                accept('error', `${modelNode} vs ${dbModelNode}`, reportOptions);
                 accept('error', 'Adding item not allowed here', reportOptions);
                 return;
             }
@@ -201,7 +218,7 @@ export class UtilService {
             const a = this.getNormalizedNodeValue(modelNode);
             const b = this.getNormalizedNodeValue(dbModelNode);
             if (a !== b) {
-                accept('error', `Editing item not allowed here`, reportOptions);
+                accept('error', 'Editing item not allowed here', reportOptions);
             }
             return;
         }
@@ -214,9 +231,9 @@ export class UtilService {
                 this.assertNoUnauthorizedChanges(
                     modelArray[i],
                     dbArray[i],
-                    allowed,
                     accept,
                     this.isAstNode(modelArray[i]) ? modelArray[i] : nodeForReport,
+                    allowed,
                     `${path}[${i}]`,
                     reportProperty
                 );
@@ -233,9 +250,9 @@ export class UtilService {
             this.assertNoUnauthorizedChanges(
                 childModelNode,
                 dbModelNode[k],
-                allowed,
                 accept,
                 this.isAstNode(childModelNode) ? childModelNode : nodeForReport,
+                allowed,
                 path ? `${path}.${k}` : k,
                 k
             );
@@ -245,9 +262,9 @@ export class UtilService {
             this.assertNoUnauthorizedChanges(
                 modelNode[k],
                 undefined,
-                allowed,
                 accept,
                 this.isAstNode(modelNode[k]) ? modelNode[k] : nodeForReport,
+                allowed,
                 path ? `${path}.${k}` : k,
                 k
             );
@@ -255,8 +272,16 @@ export class UtilService {
     }
 
 
-    matches(path: string, allowed: string[]) {
-        return allowed.some(p => p === path || new RegExp('^' + p.replace(/\./g, '\\.').replace(/\[\*\]/g, '\\[[0-9]+\\]')).test(path));
+    findMatchingPath(path: string, allowed: { path: string, exactMatch: boolean }[]) {
+        return allowed.find(p => {
+            const regexPath = p.path
+                .replace(/\./g, '\\.')
+                .replace(/\[\*\]/g, '\\[[0-9]+\\]');
+            const regex = p.exactMatch
+                ? new RegExp(`^${regexPath}$`)
+                : new RegExp(`^${regexPath}`);
+            return regex.test(path);
+        });
     }
 
 
@@ -283,5 +308,16 @@ export class UtilService {
         if ('name' in x && typeof x.name === 'string') return x.name;
         if ('id' in x && typeof x.id === 'string') return x.id;
         return x;
+    }
+
+    parseDate(value: string): Date | undefined {
+        const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value);
+        if (!m) return undefined;
+        const day = Number(m[1]);
+        const month = Number(m[2]);
+        const year = Number(m[3]);
+        const d = new Date(year, month - 1, day);
+        if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return undefined;
+        return d;
     }
 }

@@ -27,15 +27,18 @@ export class AdministratorValidator {
     constructor(private services: SharedServices) { }
 
     checkSaleOnlyHasDiscountsWithinSalePeriod(sale: AdministratorSaleType, accept: ValidationAcceptor): void {
-        const saleStart = new Date(sale.start_date);
-        const saleEnd = new Date(sale.end_date);
+        const saleStart = this.services.util.UtilService.parseDate(sale.start_date);
+        const saleEnd = this.services.util.UtilService.parseDate(sale.end_date);
+        if (saleStart > saleEnd) {
+            accept('error', 'Sale end must be after sale start', { node: sale });
+        }
         
         for (const discount of sale.discounts) {      
-            const discountStart = new Date(discount.ref.start_date);
-            const discountEnd = new Date(discount.ref.end_date);
+            const discountStart = this.services.util.UtilService.parseDate(discount.ref.start_date);
+            const discountEnd = this.services.util.UtilService.parseDate(discount.ref.end_date);
 
             if (discountStart < saleStart || discountEnd > saleEnd) {
-                accept('error', 'Sale must only have games with discounts in sale period', { node: discount.ref });
+                accept('error', 'Sale must only have games with discounts in sale period', { node: sale });
                 break;
             }
         }
@@ -50,10 +53,10 @@ export class AdministratorValidator {
     
             const dbModel = this.services.util.UtilService.buildAdministratorModelFromDBModel(db, model.administrator.name);
             const allowed = [
-                'requests[*].status',
-                'sales[*]',
-                'games[*].reviews[*].is_flagged',
+                { path: 'requests[*].status', exactMatch: true },
+                { path: 'sales[*]', exactMatch: false },
+                { path: 'games[*].reviews[*].is_flagged', exactMatch: true },
             ];
-            this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, allowed, accept, model);
+            this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, accept, model, allowed);
     }
 }

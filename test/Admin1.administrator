@@ -1,9 +1,9 @@
 administrator Admin1
 
-publisher ExamplePublisher1
+publisher Publisher1
 	balance 1135
 
-publisher ExamplePublisher2
+publisher Publisher2
 	balance 500
 
 player Player1
@@ -23,22 +23,7 @@ player Player1
 		successful true
 		date 16-05-2026 17:53:04
 		amount 10000
-		game ExampleGame4, 
-		transaction id Player1_buys_ExampleGame
-		successful true
-		date 20-05-2026 11:01:26
-		amount 45
-		game ExampleGame, 
-		transaction id Player1_buys_ExampleGame
-		successful true
-		date 20-05-2026 11:05:30
-		amount 45
-		game ExampleGame, 
-		transaction id Player1_buys_ExampleGame
-		successful true
-		date 20-05-2026 11:06:43
-		amount 45
-		game ExampleGame
+		game ExampleGame4
 
 genre Adventure
 	description "Adventure is fun"
@@ -46,9 +31,30 @@ genre Adventure
 genre Action
 	description "Action is fun"
 
+game ExampleGame2
+	genres Adventure
+	publisher Publisher2
+	price 100
+	release_date 01-02-2024
+	versions version_id "1.0" game_files "game2.exe" is_current true approved true
+
+game ExampleGame3
+	genres Adventure
+	publisher Publisher2
+	price 1000
+	release_date 01-02-2024
+	versions version_id "1.0" game_files "game3.exe" is_current true approved true
+
+game ExampleGame4
+	genres Adventure
+	publisher Publisher2
+	price 10000
+	release_date 01-02-2024
+	versions version_id "1.0" game_files "game4.exe" is_current true approved true
+
 game ExampleGame
 	genres Adventure
-	publisher ExamplePublisher1
+	publisher Publisher1
 	price 50
 	release_date 01-01-2024
 	versions version_id "1.0" game_files "game1.exe" is_current true approved true
@@ -60,41 +66,53 @@ game ExampleGame
 		author "Player2"
 		is_flagged false
 
-game ExampleGame2
-	genres Adventure
-	publisher ExamplePublisher2
-	price 100
-	release_date 01-02-2024
-	versions version_id "1.0" game_files "game2.exe" is_current true approved true
-
-game ExampleGame3
-	genres Adventure
-	publisher ExamplePublisher2
-	price 1000
-	release_date 01-02-2024
-	versions version_id "1.0" game_files "game3.exe" is_current true approved true
-
-game ExampleGame4
-	genres Adventure
-	publisher ExamplePublisher2
-	price 10000
-	release_date 01-02-2024
-	versions version_id "1.0" game_files "game4.exe" is_current true approved true
-
 game ExampleGame5
 	genres Adventure
-	publisher ExamplePublisher1
+	publisher Publisher1
 	price 50
 	release_date 01-01-2024
 	versions version_id "1.0" game_files "game1.exe" is_current true approved true
+
+game ExampleGame10
+	genres Adventure
+	publisher Publisher1
+	price 50
+	release_date 01-01-2024
+	versions version_id "1.0" game_files "game1.exe" is_current false approved true, version_id "2.0" game_files "game1.exe" is_current true approved true
+
+game ExampleGame11
+	genres Adventure
+	publisher Publisher1
+	price 50
+	release_date 01-01-2024
+	versions version_id "1.0" game_files "game1.exe" is_current true approved false
 
 approval request game ExampleGame5
 	version "1.0"
 	status APPROVED
 
+approval request game ExampleGame10
+	version "1.0"
+	status APPROVED
+
+approval request game ExampleGame11
+	version "1.0"
+	status PENDING
+
+sale Sale1
+	start_date 01-01-2026
+	end_date 07-11-2026
+	discounts ExampleDiscount1
+
 discount ExampleDiscount1
 	percentage 10
-	start_date 04-01-2026
-	end_date 06-10-2026
+	start_date 01-01-2026
+	end_date 05-10-2026
+	game ExampleGame
+
+discount ExampleDiscount2
+	percentage 10
+	start_date 05-10-2026
+	end_date 07-11-2026
 	game ExampleGame
 

@@ -50,7 +50,8 @@ export class PlayerValidator {
             this.checkGameChange(g.ref, accept);
         });
 
-        const dbLibraryGames = db.players.find(p => p.name == playerName).library.games;
+        const publishedGameNames = db.games.filter(g => g.versions.some(v => v.is_current && v.approved)).map(g => g.name);
+        const dbLibraryGames = db.players.find(p => p.name == playerName).library.games.filter(g => publishedGameNames.includes(g));
         const modelLibraryGames = library.games.map(g => g.ref.name);
         const removedGames = dbLibraryGames.filter(g => !modelLibraryGames.includes(g));
         if (removedGames.length != 0) {
@@ -106,7 +107,7 @@ export class PlayerValidator {
 
         // check versions
         console.log("Game versions are", game.versions, "DB game versions are", dbGame.versions);
-        if (this.hasGameVersionsChanged(game.versions, dbGame.versions)) {
+        if (this.hasGameVersionsChanged(game.versions, dbGame.versions.filter(v => v.is_current))) {
             accept('error', 'Players cannot add edit game versions', { node: game, property: 'versions' });
         }
 
@@ -219,20 +220,6 @@ export class PlayerValidator {
     }
 
 
-    // checkPlayerNameUnique(player: PlayerType, accept: ValidationAcceptor): void {
-    //     const db = this.services.db.DatabaseService.getDBSnapshot(player.name);
-    //     if (db === undefined) {
-    //         accept('warning', 'Could not check cached player. Try pulling first.', { node: player });
-    //         return;
-    //     }
-        
-    //     const model = player.$container
-    //     if (db.players.some(p => p.name == player.name)) {
-    //         accept('error', 'Player name must be unique', { node: player, property: 'name' });
-    //     }
-    // }
-
-
     checkPlayerBalanceCannotDecrease(player: PlayerType, accept: ValidationAcceptor): void {
         const db = this.services.db.DatabaseService.getDBSnapshot("player", player.name);
         if (db === undefined) {
@@ -256,10 +243,10 @@ export class PlayerValidator {
 
         const dbModel = this.services.util.UtilService.buildPlayerModelFromDBModel(db, model.player.name);
         const allowed = [
-            'player.balance',
-            'player.library.games[*]',
-            'games[*].reviews[*]',
+            { path: 'player.balance', exactMatch: true },
+            { path: 'player.library.games[*]', exactMatch: false },
+            { path: 'games[*].reviews[*]', exactMatch: false },
         ];
-        this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, allowed, accept, model);
+        this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, accept, model, allowed);
     }
 }
