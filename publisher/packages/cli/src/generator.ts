@@ -216,7 +216,7 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
 
 
     db.publishers.map(p => p.name).forEach(publisherName => {
-        dsl += `publisher ${publisherName}\n`;
+        dsl += `publisher ${publisherName}\n\n`;
     });
 
 
@@ -278,10 +278,6 @@ function generatePublisherFile(db: databaseModel, userID: string): string {
     });
 
     const publisherGameNames = publisherGames.map(g => g.name);
-    db.requests.filter(req => req.game in publisherGameNames).forEach(request => {
-        dsl += `approval request game ${request.game}\n`;
-        dsl += `\tversion ${request}\n`;
-    });
 
     db.sales.forEach(sale => {
         dsl += `sale ${sale.name}\n`;
@@ -300,6 +296,7 @@ function generatePublisherFile(db: databaseModel, userID: string): string {
 
     return dsl;
 }
+
 function generateAdministratorFile(db: databaseModel, userID: string): string {
     let dsl = '';
 
@@ -309,6 +306,11 @@ function generateAdministratorFile(db: databaseModel, userID: string): string {
 
     db.publishers.forEach(p => {
         dsl += `publisher ${p.name}\n`;
+        dsl += `\tbalance ${p.balance}\n\n`;
+    });
+
+    db.players.forEach(p => {
+        dsl += `player ${p.name}\n`;
         dsl += `\tbalance ${p.balance}\n\n`;
     });
 

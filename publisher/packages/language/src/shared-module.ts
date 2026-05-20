@@ -46,7 +46,7 @@ export type SharedServices = LangiumServices & SharedAddedServices
 export const SharedModule: Module<SharedServices, PartialLangiumServices & SharedAddedServices> = {
     validation: {
         PublisherValidator: (services) => new PublisherValidator(services),
-        AdministratorValidator: () => new AdministratorValidator(),
+        AdministratorValidator: (services) => new AdministratorValidator(services),
         PlayerValidator: (services) => new PlayerValidator(services)
     },
     db: {

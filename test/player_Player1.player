@@ -1,5 +1,5 @@
 player Player1
-	balance 0
+	balance 100
 	library [ExampleGame2, ExampleGame, ExampleGame4]
 	transactions
 		transaction id Player1_buys_ExampleGame2
@@ -19,7 +19,9 @@ player Player1
 		game ExampleGame4
 
 publisher ExamplePublisher1
+
 publisher ExamplePublisher2
+
 genre Adventure
 	description "Adventure is fun"
 

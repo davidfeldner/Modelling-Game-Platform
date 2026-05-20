@@ -13,6 +13,6 @@
     "include": [
         "src/**/*.ts",
         "../language/src/db-model.d.ts",
-        "../language/src/shared-util.d.ts"
+        "../language/src/shared-util.ts"
     ]
 }

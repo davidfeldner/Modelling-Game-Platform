@@ -1,4 +1,3 @@
-import * as langium from 'langium';
 import { Reference, type ValidationAcceptor, type ValidationChecks } from 'langium';
 import { PlayerModel, PlayerGameType, PlayerLibraryType, PlayerType, PlayerReviewType, type PublisherAstType, PlayerVersionType, PlayerGenreType } from './generated/ast.js';
 import { type SharedServices } from './shared-module.js';
@@ -19,7 +18,7 @@ export function registerValidationChecksPlayer(services: SharedServices) {
             validator.checkLibraryChange,
         ],
         PlayerModel: [
-            //validator.checkNoUnauthorizedChanges,
+            validator.checkNoUnauthorizedChanges,
         ],
     };
     registry.register(checks, validator);
@@ -226,84 +225,6 @@ export class PlayerValidator {
             'player.library.games[*]',
             'player.library.games[*].reviews[*]',
         ];
-        this.assertNoUnauthorizedChanges(model, dbModel, allowed, accept, model);
-    }
-
-
-    assertNoUnauthorizedChanges(modelNode: any, dbModelNode: any, allowed: string[], accept: ValidationAcceptor, nodeForReport: any, path = ''): void {
-        if (this.matches(path, allowed)) {
-            return;
-        }
-
-        if (modelNode == null || dbModelNode == null || typeof modelNode !== 'object' || typeof dbModelNode !== 'object' || this.isLangiumRef(modelNode) || this.isLangiumRef(dbModelNode)) {
-            if (this.normalizeNodeValue(modelNode) !== this.normalizeNodeValue(dbModelNode)) {
-                accept('error', `Editing value not allowed ${this.normalizeNodeValue(modelNode)} vs ${this.normalizeNodeValue(dbModelNode)}`, { node: nodeForReport });
-            }
-            return;
-        }
-
-        if (Array.isArray(modelNode) || Array.isArray(dbModelNode)) {
-            const modelArray = Array.isArray(modelNode) ? modelNode : [];
-            const dbArray = Array.isArray(dbModelNode) ? dbModelNode : [];
-            const maxLength = Math.max(modelArray.length, dbArray.length);
-            for (let i = 0; i < maxLength; i++) {
-                this.assertNoUnauthorizedChanges(
-                    modelArray[i],
-                    dbArray[i],
-                    allowed,
-                    accept,
-                    modelArray[i] ?? nodeForReport,
-                    `${path}[${i}]`
-                );
-            }
-            return;
-        }
-
-        // Use DB keys as the basis for comparison. First check keys present in DB (detect deletions/edits),
-        // then detect any extra keys in the model (additions).
-        const dbKeys = Object.keys(dbModelNode || {});
-        const modelKeys = Object.keys(modelNode || {}).filter(k => !k.startsWith('$'));
-        for (const k of dbKeys) {
-            this.assertNoUnauthorizedChanges(
-                modelNode && k in modelNode ? modelNode[k] : undefined,
-                dbModelNode[k],
-                allowed,
-                accept,
-                modelNode && k in modelNode ? modelNode[k] : nodeForReport,
-                path ? `${path}.${k}` : k
-            );
-        }
-        for (const k of modelKeys) {
-            if (dbKeys.includes(k)) continue;
-            this.assertNoUnauthorizedChanges(
-                modelNode[k],
-                undefined,
-                allowed,
-                accept,
-                modelNode[k] ?? nodeForReport,
-                path ? `${path}.${k}` : k
-            );
-        }
-    }
-
-
-    matches(path: string, allowed: string[]) {
-        return allowed.some(p => p === path || new RegExp('^' + p.replace(/\./g, '\\.').replace(/\[\*\]/g, '\\[[0-9]+\\]')).test(path));
-    }
-
-
-    isLangiumRef(x: any): x is langium.Reference<any> {
-        return x && typeof x === 'object' && 'ref' in x;
-    }
-
-
-    normalizeNodeValue(x: any) {
-        if (this.isLangiumRef(x)) return this.normalizeNodeValue(x.ref);
-        if (x == null) return x;
-        if (typeof x !== 'object') return x;
-        // Prefer common identity fields for comparison
-        if ('name' in x && typeof x.name === 'string') return x.name;
-        if ('id' in x && typeof x.id === 'string') return x.id;
-        return x;
+        this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, allowed, accept, model);
     }
 }

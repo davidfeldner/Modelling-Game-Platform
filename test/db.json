@@ -1,1 +1,136 @@
-{"discounts":[{"end_date":"06-10-2026","game":"ExampleGame","name":"ExampleDiscount1","percentage":10,"start_date":"04-01-2026"}],"games":[{"genres":["Adventure"],"name":"ExampleGame","price":50,"publisher":"ExamplePublisher1","release_date":"01-01-2024","reviews":[],"versions":[{"approved":true,"game_files":"game1.exe","is_current":true,"version_id":"1.0"}]},{"genres":["Adventure"],"name":"ExampleGame2","price":100,"publisher":"ExamplePublisher2","release_date":"01-02-2024","reviews":[],"versions":[{"approved":true,"game_files":"game2.exe","is_current":true,"version_id":"1.0"}]},{"genres":["Adventure"],"name":"ExampleGame3","price":1000,"publisher":"ExamplePublisher2","release_date":"01-02-2024","reviews":[],"versions":[{"approved":true,"game_files":"game3.exe","is_current":true,"version_id":"1.0"}]},{"genres":["Adventure"],"name":"ExampleGame4","price":10000,"publisher":"ExamplePublisher2","release_date":"01-02-2024","reviews":[],"versions":[{"approved":true,"game_files":"game4.exe","is_current":true,"version_id":"1.0"}]},{"name":"ExampleGame5","release_date":"01-01-2024","price":50,"versions":[{"version_id":"1.0","game_files":"game1.exe","is_current":true,"approved":true}],"genres":["Adventure"],"publisher":"ExamplePublisher1","reviews":[]}],"genres":[{"description":"Adventure is fun","name":"Adventure"},{"name":"Action","description":"Action is fun"}],"players":[{"balance":0,"library":{"games":["ExampleGame2","ExampleGame","ExampleGame4"]},"name":"Player1","transactions":[{"amount":50,"date":"06-05-2026 09:35:26","game":"ExampleGame2","id":"Player1_buys_ExampleGame2","successful":true},{"amount":45,"date":"06-05-2026 09:37:39","game":"ExampleGame","id":"Player1_buys_ExampleGame","successful":true},{"id":"Player1_buys_ExampleGame4","date":"16-05-2026 17:53:04","successful":true,"amount":10000,"game":"ExampleGame4"}]}],"publishers":[{"balance":1000,"name":"ExamplePublisher1"},{"balance":500,"name":"ExamplePublisher2"}],"sales":[],"requests":[{"game":"ExampleGame5","game_version":"1.0","status":"APPROVED"}],"administrators":[{"name":"Admin1"}]}
+{
+  "discounts": [
+    {
+      "end_date": "06-10-2026",
+      "game": "ExampleGame",
+      "name": "ExampleDiscount1",
+      "percentage": 10,
+      "start_date": "04-01-2026"
+    }
+  ],
+  "games": [
+    {
+      "genres": ["Adventure"],
+      "name": "ExampleGame",
+      "price": 50,
+      "publisher": "ExamplePublisher1",
+      "release_date": "01-01-2024",
+      "reviews": [],
+      "versions": [
+        {
+          "approved": true,
+          "game_files": "game1.exe",
+          "is_current": true,
+          "version_id": "1.0"
+        }
+      ]
+    },
+    {
+      "genres": ["Adventure"],
+      "name": "ExampleGame2",
+      "price": 100,
+      "publisher": "ExamplePublisher2",
+      "release_date": "01-02-2024",
+      "reviews": [],
+      "versions": [
+        {
+          "approved": true,
+          "game_files": "game2.exe",
+          "is_current": true,
+          "version_id": "1.0"
+        }
+      ]
+    },
+    {
+      "genres": ["Adventure"],
+      "name": "ExampleGame3",
+      "price": 1000,
+      "publisher": "ExamplePublisher2",
+      "release_date": "01-02-2024",
+      "reviews": [],
+      "versions": [
+        {
+          "approved": true,
+          "game_files": "game3.exe",
+          "is_current": true,
+          "version_id": "1.0"
+        }
+      ]
+    },
+    {
+      "genres": ["Adventure"],
+      "name": "ExampleGame4",
+      "price": 10000,
+      "publisher": "ExamplePublisher2",
+      "release_date": "01-02-2024",
+      "reviews": [],
+      "versions": [
+        {
+          "approved": true,
+          "game_files": "game4.exe",
+          "is_current": true,
+          "version_id": "1.0"
+        }
+      ]
+    },
+    {
+      "name": "ExampleGame5",
+      "release_date": "01-01-2024",
+      "price": 50,
+      "versions": [
+        {
+          "version_id": "1.0",
+          "game_files": "game1.exe",
+          "is_current": true,
+          "approved": true
+        }
+      ],
+      "genres": ["Adventure"],
+      "publisher": "ExamplePublisher1",
+      "reviews": []
+    }
+  ],
+  "genres": [
+    { "description": "Adventure is fun", "name": "Adventure" },
+    { "name": "Action", "description": "Action is fun" }
+  ],
+  "players": [
+    {
+      "balance": 100,
+      "library": { "games": ["ExampleGame2", "ExampleGame", "ExampleGame4"] },
+      "name": "Player1",
+      "transactions": [
+        {
+          "amount": 50,
+          "date": "06-05-2026 09:35:26",
+          "game": "ExampleGame2",
+          "id": "Player1_buys_ExampleGame2",
+          "successful": true
+        },
+        {
+          "amount": 45,
+          "date": "06-05-2026 09:37:39",
+          "game": "ExampleGame",
+          "id": "Player1_buys_ExampleGame",
+          "successful": true
+        },
+        {
+          "id": "Player1_buys_ExampleGame4",
+          "date": "16-05-2026 17:53:04",
+          "successful": true,
+          "amount": 10000,
+          "game": "ExampleGame4"
+        }
+      ]
+    }
+  ],
+  "publishers": [
+    { "balance": 1000, "name": "ExamplePublisher1" },
+    { "balance": 500, "name": "ExamplePublisher2" }
+  ],
+  "sales": [],
+  "requests": [
+    { "game": "ExampleGame5", "game_version": "1.0", "status": "APPROVED" }
+  ],
+  "administrators": [{ "name": "Admin1" }]
+}

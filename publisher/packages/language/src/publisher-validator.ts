@@ -1,5 +1,5 @@
 import { AstUtils, type ValidationAcceptor, type ValidationChecks } from 'langium';
-import { isPublisherDiscountType, PublisherDiscountType, PublisherSaleType, PublisherVersionType, PublisherModel, type PublisherAstType, PublisherGameType } from './generated/ast.js';
+import { isPublisherDiscountType, PublisherDiscountType, PublisherSaleType, PublisherModel, type PublisherAstType, PublisherGameType, PublisherType } from './generated/ast.js';
 import type { SharedServices } from './shared-module.js';
 
 /**
@@ -9,9 +9,16 @@ export function registerValidationChecksPublisher(services: SharedServices) {
     const registry = services.validation.ValidationRegistry;
     const validator = services.validation.PublisherValidator;
     const checks: ValidationChecks<PublisherAstType> = {
-        PublisherModel: validator.checkGamesChanges,
+        PublisherModel: [
+            validator.checkGamesChanges,
+            validator.checkNoUnauthorizedChanges,
+        ],
         PublisherDiscountType: validator.checkDiscountsDoNotOverlap,
         PublisherSaleType: validator.checkDiscountPeriodsWithinSalePeriod,
+        PublisherType: [
+            validator.checkPublisherBalancePositive,
+            validator.checkPublisherBalanceCannotDecrease,
+        ],
     };
     registry.register(checks, validator);
 }
@@ -86,6 +93,7 @@ export class PublisherValidator {
         
     }
 
+
     checkDiscountsDoNotOverlap(discount: PublisherDiscountType, accept: ValidationAcceptor): void {
         const container = discount.$container;
 
@@ -109,6 +117,7 @@ export class PublisherValidator {
         }
     }
 
+
     checkDiscountPeriodsWithinSalePeriod(sale: PublisherSaleType, accept: ValidationAcceptor): void {
         const saleStart = new Date(sale.start_date);
         const saleEnd = new Date(sale.end_date);
@@ -122,5 +131,45 @@ export class PublisherValidator {
                 break;
             }
         }
+    }
+
+
+    checkPublisherBalancePositive(publisher: PublisherType, accept: ValidationAcceptor): void {
+        if (publisher.balance < 0) {
+            accept('error', 'Balance cannot be negative', { node: publisher, property: 'balance' });
+        }
+    }
+
+
+    checkPublisherBalanceCannotDecrease(publisher: PublisherType, accept: ValidationAcceptor): void {
+        const db = this.services.db.DatabaseService.getDBSnapshot(publisher.name);
+        if (db === undefined) {
+            accept('warning', 'Could not check cached publisher balance. Try pulling first.', { node: publisher });
+            return;
+        }
+
+        const current_balance = db?.publishers.find(p => p.name == publisher.name)?.balance;
+        if (publisher.balance < current_balance) {
+            accept('error', 'Balance cannot decrease', { node: publisher, property: 'balance' });
+        }
+    }
+
+
+    checkNoUnauthorizedChanges(model: PublisherModel, accept: ValidationAcceptor): void {
+        const db = this.services.db.DatabaseService.getDBSnapshot(model.publisher.name);
+        if (db === undefined) {
+            accept('warning', 'Could not check cached data. Try pulling first.', { node: model });
+            return;
+        }
+
+        const dbModel = this.services.util.UtilService.buildPublisherModelFromDBModel(db, model.publisher.name);
+        const allowed = [
+            'publisher.balance',
+            'games[*]',
+            'genres[*]',
+            'sales[*].discounts[*]',
+            'discounts[*]',
+        ];
+        this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, allowed, accept, model);
     }
 }

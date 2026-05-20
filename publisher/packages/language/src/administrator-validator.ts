@@ -1,5 +1,5 @@
-import { AstUtils, type ValidationAcceptor, type ValidationChecks } from 'langium';
-import { isAdministratorDiscountType, type PublisherAstType, type AdministratorDiscountType, AdministratorSaleType } from './generated/ast.js';
+import { type ValidationAcceptor, type ValidationChecks } from 'langium';
+import { type PublisherAstType, AdministratorModel, AdministratorSaleType } from './generated/ast.js';
 import type { SharedServices } from './shared-module.js';
 
 /**
@@ -9,7 +9,8 @@ export function registerValidationChecksAdministrator(services: SharedServices) 
     const registry = services.validation.ValidationRegistry;
     const validator = services.validation.AdministratorValidator;
     const checks: ValidationChecks<PublisherAstType> = {
-        AdministratorSaleType: validator.checkSaleOnlyHasDiscountsWithinSalePeriod
+        AdministratorSaleType: validator.checkSaleOnlyHasDiscountsWithinSalePeriod,
+        AdministratorModel: validator.checkNoUnauthorizedChanges,
     };
     registry.register(checks, validator);
 }
@@ -23,6 +24,8 @@ export function registerValidationChecksAdministrator(services: SharedServices) 
  * - change status for game approval request
  */
 export class AdministratorValidator {
+    constructor(private services: SharedServices) { }
+
     checkSaleOnlyHasDiscountsWithinSalePeriod(sale: AdministratorSaleType, accept: ValidationAcceptor): void {
         const saleStart = new Date(sale.start_date);
         const saleEnd = new Date(sale.end_date);
@@ -36,5 +39,19 @@ export class AdministratorValidator {
                 break;
             }
         }
+    }
+
+    checkNoUnauthorizedChanges(model: AdministratorModel, accept: ValidationAcceptor): void {
+            const db = this.services.db.DatabaseService.getDBSnapshot(model.administrator.name);
+            if (db === undefined) {
+                accept('warning', 'Could not check cached data. Try pulling first.', { node: model });
+                return;
+            }
+    
+            const dbModel = this.services.util.UtilService.buildAdministratorModelFromDBModel(db, model.administrator.name);
+            const allowed = [
+                'requests[*].status',
+            ];
+            this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, allowed, accept, model);
     }
 }

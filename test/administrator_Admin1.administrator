@@ -6,6 +6,9 @@ publisher ExamplePublisher1
 publisher ExamplePublisher2
 	balance 500
 
+player Player1
+	balance 100
+
 genre Adventure
 	description "Adventure is fun"
 
