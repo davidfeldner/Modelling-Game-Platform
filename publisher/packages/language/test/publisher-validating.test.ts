@@ -35,8 +35,10 @@ describe('Validating', () => {
         ).toHaveLength(0);
     });
 
-    // - Is Skyrim a game?
-    test('check Skyrim is a game', async () => {
+    
+
+    // - What is the current version of Skyrim?
+    test('check current version of Skyrim', async () => {
         document = await parse(`
             publisher Bethesda_Game_Studios
             balance 10000
@@ -49,14 +51,56 @@ describe('Validating', () => {
                 publisher Bethesda_Game_Studios 
                 price 3999
                 release_date 28-08-2016
-                state "approved"
-                versions version_id "1.6.1179" game_files "skyrim.exe" is_current true approved true
+                versions 
+                    version_id "1.6.1179" game_files "skyrim.exe" is_current true approved true
+                    version_id "1.5.123" game_files "skyrim.exe" is_current false approved true
+                purchase_count 10
         `);
-        
+        const model = document.parseResult.value
+        const skyrim = model.games.find(g => g.name == "The_Elder_Scrolls_V_Skyrim_Special_Edition")
+        expect(skyrim.versions.find(v => v.is_current).name == "1.6.1179")
         expect(
             checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n')
         ).toHaveLength(0);
     });
+
+
+    // - How many players have bought Skyrim?
+    test('check purchase_count on game', async () => {
+        document = await parse(`
+            publisher Bethesda_Game_Studios
+            balance 10000
+
+            genre RPG
+	        description "Role Playing Game genre"
+
+            game The_Elder_Scrolls_V_Skyrim_Special_Edition
+                genres RPG
+                publisher Bethesda_Game_Studios 
+                price 3999
+                release_date 28-08-2016
+                versions 
+                    version_id "1.6.1179" game_files "skyrim.exe" is_current true approved true
+                    version_id "1.5.123" game_files "skyrim.exe" is_current false approved true
+                reviews
+                    review content "this is a bad game"
+                        is_flagged false
+                        author "Player1"
+                    review content "this is my favorite game of all time!!"
+                        is_flagged false
+                        author "Player2"
+                purchase_count 10
+        `);
+        const model = document.parseResult.value
+        const skyrim = model.games.find(g => g.name == "The_Elder_Scrolls_V_Skyrim_Special_Edition")
+            
+        expect(skyrim.purchased_count == 10)
+        expect(
+            checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n')
+        ).toHaveLength(0);
+    });
+
+
 });
 
 function checkDocumentValid(document: LangiumDocument): string | undefined {

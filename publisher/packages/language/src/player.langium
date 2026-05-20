@@ -34,7 +34,7 @@ interface PlayerVersionType extends NamedElement {
 interface PlayerReviewType {
     content: string
     is_flagged: boolean
-    author: @PlayerType
+    author: string
 }
 
 interface PlayerSaleType extends NamedElement {
@@ -102,7 +102,7 @@ PlayerVersion returns PlayerVersionType:
 
 Review returns PlayerReviewType:
     'review' 'content' content=STRING
-    'author' author=[PlayerType:ID]
+    'author' author=STRING
     'is_flagged' is_flagged=BOOLEAN;
 
 PlayerSale returns PlayerSaleType:

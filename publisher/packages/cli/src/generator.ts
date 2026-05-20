@@ -14,8 +14,8 @@ function getCurrentDB(dbPath: string): databaseModel {
     return db;
 }
 
-function saveDBSnapshotForClient(snapshot: databaseModel, userID: string) {
-    const snapshotPath = `./db_snapshots/${userID}.snapshot.json`;
+function saveDBSnapshotForClient(snapshot: databaseModel, fileType: string, userID: string) {
+    const snapshotPath = `./db_snapshots/${userID}.${fileType}.snapshot.json`;
     fs.writeFileSync(snapshotPath, JSON.stringify(snapshot));
 }
 
@@ -42,7 +42,7 @@ export function pushToDBPlayer(model: PlayerModel, dbPath='./db.json'): string {
     const newGamesReferences = model.player.library.games.filter(g => !ownedGames.includes(g.ref.name));
     const newGames = newGamesReferences.map(g => db.games.find(game => game.name === g.ref.name));
 
-    const totalCost = newGames.reduce((sum, g) => sum + g.price, 0);
+    const totalCost = newGames.reduce((sum, g) => sum + services.utilService.getDiscountedPrice(g, db.sales, db.discounts), 0);
     if (savedPlayer.balance >= totalCost) {
         const transactions = newGames.map(g => {
             const gamePrice = services.utilService.getDiscountedPrice(g, db.sales, db.discounts);
@@ -55,13 +55,36 @@ export function pushToDBPlayer(model: PlayerModel, dbPath='./db.json'): string {
             };
         });
 
+        newGames.forEach(g => {
+            db.publishers.find(p => p.name === g.publisher).balance += services.utilService.getDiscountedPrice(g, db.sales, db.discounts);
+            g.purchased_count += 1
+        });
+
         savedPlayer.transactions.push(...transactions);
         savedPlayer.library.games.push(...newGames.map(g => g.name));
-
         savedPlayer.balance -= totalCost;
+        
     }
 
-    //TODO review save
+    model.games.forEach(game => {
+        const dbGame = db.games.find(g => g.name === game.name);
+        if (game.reviews.some(r => r.author === model.player.name)) {
+            const review = game.reviews.find(r => r.author === model.player.name);
+            const existingReview = dbGame.reviews.find(r => r.author === model.player.name);
+            if (existingReview) {
+                existingReview.content = review.content;
+                existingReview.is_flagged = false
+            } else {
+                dbGame.reviews.push({
+                    author: model.player.name,
+                    content: review.content,
+                    is_flagged: false
+                })
+            }
+        } else if (dbGame.reviews.some(r => r.author === model.player.name)) {
+            dbGame.reviews = dbGame.reviews.filter(r => r.author !== model.player.name);
+        }
+    })
 
     const updates: databaseModel = { ...db };
 
@@ -98,8 +121,7 @@ export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): st
         };
     });
 
-    const games = createdGames.map(g => {
-        const game = {
+    const gamesChangedOrAdded = model.games.map(g => ({
             name: g.name,
             release_date: g.release_date,
             price: g.price,
@@ -107,16 +129,22 @@ export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): st
                 version_id: v.name,
                 game_files: v.game_files,
                 is_current: v.is_current,
-                approved: false
+                approved: v.approved
             })),
             genres: g.genres.map(genre => genre.ref.name),
             publisher: model.publisher.name,
-            reviews: []
-        }
-        return game;
-    });
+            reviews: g.reviews.map(r => ({
+                content: r.content,
+                is_flagged: r.is_flagged,
+                author: r.author
+            })),
+            purchased_count: g.purchased_count ?? 0
+        }));
 
-    db.games.push(...games);
+    db.games = [
+        ...db.games.filter(g => !gamesChangedOrAdded.some(cg => cg.name === g.name)),
+        ...gamesChangedOrAdded
+    ];
     db.requests.push(...requests)
 
     const existingGenres = db.genres.map(g => g.name);
@@ -129,6 +157,37 @@ export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): st
 
     db.genres.push(...createdGenres);
 
+    const publisherGames = new Set(
+        db.games
+            .filter(g => g.publisher === savedPublisher.name)
+            .map(g => g.name)
+    );
+
+    const existingNames = new Set(db.discounts.map(d => d.name));
+    const incomingNames = new Set(model.discounts.map(d => d.name));
+
+    const added = model.discounts.filter(d => !existingNames.has(d.name));
+    const removed = db.discounts.filter(d => !incomingNames.has(d.name));
+
+    if (added.some(d => !publisherGames.has(d.game.ref.name))) {
+        throw new Error("Publishers cannot create discounts for games they do not publish");
+    }
+
+    if (removed.some(d => !publisherGames.has(d.game))) {
+        throw new Error("Publishers cannot remove discounts for games they do not publish");
+    }
+
+    db.discounts = [
+        ...db.discounts.filter(d => incomingNames.has(d.name)),
+        ...added.map(d => ({
+            name: d.name,
+            game: d.game.ref.name,
+            percentage: d.percentage,
+            start_date: d.start_date,
+            end_date: d.end_date
+        }))
+    ];
+    
     const updates: databaseModel = { ...db };
 
     console.dir(db, { depth: null });
@@ -178,15 +237,75 @@ export function pushToDBAdministrator(model: AdministratorModel, dbPath='./db.js
         db.requests.find(r => r.game === req.game.ref.name && r.game_version === req.game_version.ref.name).status = 'REJECTED';
     })
 
+    model.games.forEach(game => {
+        const dbGame = db.games.find(g => g.name === game.name);
+        game.reviews.forEach(review => {
+            const existingReview = dbGame.reviews.find(r => r.author === review.author);
+            if (existingReview.is_flagged != review.is_flagged) {
+                existingReview.is_flagged = review.is_flagged;
+            }
+        })
+    })
+
+
+    const existingNames = new Set(db.sales.map(d => d.name));
+    const incomingNames = new Set(model.sales.map(d => d.name));
+
+    const added = model.sales.filter(d => !existingNames.has(d.name));
+
+    db.sales = [
+        ...db.sales.filter(d => incomingNames.has(d.name)),
+        ...added.map(d => ({
+            name: d.name,
+            start_date: d.start_date,
+            end_date: d.end_date,
+            discounts: d.discounts.map(discount => discount.ref.name)
+        }))
+    ];
+
     const updates: databaseModel = { ...db };
 
     fs.writeFileSync(dbPath, JSON.stringify(updates));
     return dbPath;
 }
 
+export function createUser(userType: string, userID: string, dbPath='./db.json'): void {
+    const db = getCurrentDB(dbPath);
+    if (userType === 'player') {
+        if (db.players.some(p => p.name === userID)) {
+            throw new Error(`Player with name ${userID} already exists in DB`);
+        }
+        db.players.push({
+            name: userID,
+            balance: 0,
+            library: { games: [] },
+            transactions: []
+
+        });
+    } else if (userType === 'publisher') {
+        if (db.publishers.some(p => p.name === userID)) {
+            throw new Error(`Publisher with name ${userID} already exists in DB`);
+        }
+        db.publishers.push({
+            name: userID,
+            balance: 0
+        });
+    } else if (userType === 'administrator') {
+        if (db.administrators.some(a => a.name === userID)) {
+            throw new Error(`Administrator with name ${userID} already exists in DB`);
+        }
+        db.administrators.push({
+            name: userID
+        });
+    } else {
+        throw new Error(`Unknown user type: ${userType}`);
+    }
+    fs.writeFileSync(dbPath, JSON.stringify(db));
+}
+
 export function generateFromDB(fileType: string, userID: string, dbPath='./db.json', clientFilePath?: string): string {
     const json: databaseModel = getCurrentDB(dbPath);
-    saveDBSnapshotForClient(json, userID);
+    saveDBSnapshotForClient(json, fileType, userID);
     validateDBNotEmpty(json);
 
     let generatedFile = "";
@@ -199,7 +318,7 @@ export function generateFromDB(fileType: string, userID: string, dbPath='./db.js
     } else {
         throw new Error(`Unknown file type: ${fileType}`);
     }
-    const path = clientFilePath || `./${fileType}_${userID}.${fileType}`;
+    const path = clientFilePath || `./${userID}.${fileType}`;
     fs.writeFileSync(path, generatedFile);
     return path;
 }
@@ -212,7 +331,10 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
     dsl += `player ${`${player.name}`}\n`;
     dsl += `\tbalance ${player.balance}\n`;
     dsl += `\tlibrary [${player.library.games.join(', ')}]\n`;
-    dsl += `\ttransactions\n\t${player.transactions.map(t => globalTransactionDSL(t)).join(', \n\t')}\n\n`;
+    if (player.transactions.length != 0)
+        dsl += `\ttransactions\n\t${player.transactions.map(t => globalTransactionDSL(t)).join(', \n\t')}`;
+    dsl += `\n\n`;
+    
 
 
     db.publishers.map(p => p.name).forEach(publisherName => {
@@ -234,7 +356,8 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
             dsl += `\trelease_date ${game.release_date}\n`;
             dsl += `\tversions ${game.versions?.filter(v => v.is_current).map(v => `version_id "${v.version_id}" game_files "${v.game_files}"`).join(', ')}\n`;
             if (game.reviews?.length != 0) {
-                dsl += `\treviews\n\t${game.reviews.map(r => globalReviewDSL(r)).join(',\n\t')}\n`
+                // Show not flagged reviews and player's own flagged reviews
+                dsl += `\treviews\n\t${game.reviews.filter(r => !r.is_flagged || r.author === userID).map(r => globalReviewDSL(r)).join(',\n\t')}\n`
             }
             dsl += `\n`
         }
@@ -272,8 +395,10 @@ function generatePublisherFile(db: databaseModel, userID: string): string {
         dsl += `\trelease_date ${game.release_date}\n`;
         dsl += `\tversions ${game.versions?.map(v => `version_id "${v.version_id}" game_files "${v.game_files}" is_current ${v.is_current} approved ${v.approved}`).join(', ')}\n`;
         if (game.reviews?.length != 0) {
-            dsl += `\treviews\n\t${game.reviews.map(r => globalReviewDSL(r)).join(',\n\t')}\n`
+            // Only show non-flagged reviews to publishers
+            dsl += `\treviews\n\t${game.reviews.filter(r => !r.is_flagged).map(r => globalReviewDSL(r)).join(',\n\t')}\n`;
         }
+        dsl += `\tpurchased_count ${game.purchased_count}\n`;
         dsl += `\n`
     });
 
@@ -311,7 +436,10 @@ function generateAdministratorFile(db: databaseModel, userID: string): string {
 
     db.players.forEach(p => {
         dsl += `player ${p.name}\n`;
-        dsl += `\tbalance ${p.balance}\n\n`;
+        dsl += `\tbalance ${p.balance}\n`;
+        if (p.transactions?.length != 0) {
+            dsl += `\ttransactions\n\t${p.transactions.map(t => globalTransactionDSL(t)).join(', \n\t')}\n\n`;
+        }
     });
 
     db.genres.forEach(genre => {

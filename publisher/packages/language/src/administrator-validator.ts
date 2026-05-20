@@ -42,7 +42,7 @@ export class AdministratorValidator {
     }
 
     checkNoUnauthorizedChanges(model: AdministratorModel, accept: ValidationAcceptor): void {
-            const db = this.services.db.DatabaseService.getDBSnapshot(model.administrator.name);
+            const db = this.services.db.DatabaseService.getDBSnapshot("administrator", model.administrator.name);
             if (db === undefined) {
                 accept('warning', 'Could not check cached data. Try pulling first.', { node: model });
                 return;
@@ -51,6 +51,8 @@ export class AdministratorValidator {
             const dbModel = this.services.util.UtilService.buildAdministratorModelFromDBModel(db, model.administrator.name);
             const allowed = [
                 'requests[*].status',
+                'sales[*]',
+                'games[*].reviews[*].is_flagged',
             ];
             this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, allowed, accept, model);
     }

@@ -13,6 +13,7 @@ export function registerValidationChecksPlayer(services: SharedServices) {
         PlayerType: [
             validator.checkPlayerBalancePositive,
             validator.checkPlayerBalanceCannotDecrease,
+            //validator.checkPlayerNameUnique,
         ],
         PlayerLibraryType: [
             validator.checkLibraryChange,
@@ -39,7 +40,7 @@ export class PlayerValidator {
     checkLibraryChange(library: PlayerLibraryType, accept: ValidationAcceptor): void {
         const playerName = library.$container.name;
 
-        const db = this.services.db.DatabaseService.getDBSnapshot(playerName);
+        const db = this.services.db.DatabaseService.getDBSnapshot("player", playerName);
         if (db === undefined) {
             accept('warning', 'Could not check cached player library. Try pulling first.', { node: library });
             return;
@@ -53,6 +54,8 @@ export class PlayerValidator {
         const modelLibraryGames = library.games.map(g => g.ref.name);
         const removedGames = dbLibraryGames.filter(g => !modelLibraryGames.includes(g));
         if (removedGames.length != 0) {
+            // TODO: games are allowed to be "removed" if there is no current version 
+
             accept('error', 'Players cannot remove games from their library', { node: library });
         }
 
@@ -75,7 +78,7 @@ export class PlayerValidator {
         console.log("specified game", game.name);
         const playerName = game.$container.player.name;
 
-        const db = this.services.db.DatabaseService.getDBSnapshot(playerName);
+        const db = this.services.db.DatabaseService.getDBSnapshot("player", playerName);
         if (db === undefined) {
             accept('warning', 'Could not check cached games. Try pulling first.', { node: game });
             return;
@@ -118,21 +121,39 @@ export class PlayerValidator {
         if (dbGame.reviews.length !== game.reviews.length || this.hasReviewsChanged(game, dbGame)) {
             // Deleted reviews - present in DB but not in model
             dbGame.reviews.filter(
-                dbReview => !game.reviews.some(
-                    r => r.author.ref.name === dbReview.author.name && r.content === dbReview.content
-                )
+                dbReview => !game.reviews.some(r => r.author === dbReview.author)
             ).forEach(r => {
-                if (r.author.name !== playerName) {
+                if (r.author !== playerName) {
                     accept('error', 'Players can only delete their own reviews', { node: game, property: 'reviews' });
                 }
             });
 
+            const existingReviews = game.reviews.filter(r => dbGame.reviews.map(dbReview => dbReview.author).includes(r.author));
+            const duplicateAuthors = existingReviews
+                .map(r => r.author)
+                .filter((author, index, authors) => authors.indexOf(author) !== index);
+            if (duplicateAuthors.length > 0) {
+                accept('error', 'Players can only write one review per game', { node: game, property: 'reviews' });
+            }
+            for (const review of existingReviews) {
+                const dbReview = dbGame.reviews.find(dbReview => dbReview.author === review.author);
+                if (!dbReview) continue;
+
+                if (review.author !== playerName && (review.content !== dbReview.content || review.is_flagged !== dbReview.is_flagged)) {
+                    accept('error', 'Players can only edit their own reviews', { node: review });
+                    continue;
+                }
+            }
+
             // New reviews - not present in DB but present in model
             game.reviews.filter(
-                r => !dbGame.reviews.some(
-                    dbReview => dbReview.author.name === r.author.ref.name && dbReview.content === r.content
-                )
-            ).forEach(r => this.checkReviewGameIsInLibrary(r, accept));
+                r => !dbGame.reviews.some(dbReview => dbReview.author === r.author)
+            ).forEach(r => {
+                if (r.author !== playerName) {
+                    accept('error', 'Players can only write reviews for themselves', { node: r });
+                }
+                this.checkReviewGameIsInLibrary(r, accept);
+            });
 
         }
     }
@@ -143,7 +164,7 @@ export class PlayerValidator {
             const dbReview = dbGame.reviews[i];
             const gameReview = game.reviews[i];
 
-            if (dbReview.author.name !== gameReview.author.ref.name ||
+            if (dbReview.author !== gameReview.author ||
                 dbReview.content !== gameReview.content ||
                 dbReview.is_flagged !== gameReview.is_flagged) {
                 return true
@@ -155,7 +176,7 @@ export class PlayerValidator {
 
 
     checkReviewGameIsInLibrary(review: PlayerReviewType, accept: ValidationAcceptor): void {
-        const games = review.author.ref.library.games.map(g => g.ref.name);
+        const games = review.$container.$container.player.library.games.map(g => g.ref.name);
 
         if (!games.includes(review.$container.name)) {
             accept('error', 'Player must have game in library to write review', { node: review });
@@ -198,8 +219,22 @@ export class PlayerValidator {
     }
 
 
+    // checkPlayerNameUnique(player: PlayerType, accept: ValidationAcceptor): void {
+    //     const db = this.services.db.DatabaseService.getDBSnapshot(player.name);
+    //     if (db === undefined) {
+    //         accept('warning', 'Could not check cached player. Try pulling first.', { node: player });
+    //         return;
+    //     }
+        
+    //     const model = player.$container
+    //     if (db.players.some(p => p.name == player.name)) {
+    //         accept('error', 'Player name must be unique', { node: player, property: 'name' });
+    //     }
+    // }
+
+
     checkPlayerBalanceCannotDecrease(player: PlayerType, accept: ValidationAcceptor): void {
-        const db = this.services.db.DatabaseService.getDBSnapshot(player.name);
+        const db = this.services.db.DatabaseService.getDBSnapshot("player", player.name);
         if (db === undefined) {
             accept('warning', 'Could not check cached player balance. Try pulling first.', { node: player });
             return;
@@ -213,7 +248,7 @@ export class PlayerValidator {
 
 
     checkNoUnauthorizedChanges(model: PlayerModel, accept: ValidationAcceptor): void {
-        const db = this.services.db.DatabaseService.getDBSnapshot(model.player.name);
+        const db = this.services.db.DatabaseService.getDBSnapshot("player", model.player.name);
         if (db === undefined) {
             accept('warning', 'Could not check cached data. Try pulling first.', { node: model });
             return;
@@ -223,7 +258,7 @@ export class PlayerValidator {
         const allowed = [
             'player.balance',
             'player.library.games[*]',
-            'player.library.games[*].reviews[*]',
+            'games[*].reviews[*]',
         ];
         this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, allowed, accept, model);
     }

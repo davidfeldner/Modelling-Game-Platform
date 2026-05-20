@@ -1,12 +1,14 @@
 import { databaseModel } from "./db-model.js";
 import * as fs from 'node:fs';
 
+type ModelType = 'player' | 'publisher' | 'administrator';
+
 export class DatabaseService {
     private readonly snapshotFolderPath = 'db_snapshots';
 
-    getDBSnapshot(userID: string): databaseModel | undefined {
+    getDBSnapshot(fileType: ModelType, userID: string): databaseModel | undefined {
         try {
-            const snapshotFilePath = `${this.snapshotFolderPath}/${userID}.snapshot.json`;
+            const snapshotFilePath = `${this.snapshotFolderPath}/${userID}.${fileType}.snapshot.json`;
             if (!fs.existsSync(snapshotFilePath)) {
                 return undefined;
             }

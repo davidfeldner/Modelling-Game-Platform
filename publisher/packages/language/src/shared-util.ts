@@ -62,7 +62,7 @@ export class UtilService {
             price: g.price,
             release_date: g.release_date,
             versions: g.versions.map(v => ({ name: v.version_id, game_files: v.game_files })),
-            reviews: (g.reviews || []).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: { name: r.author.name } }))
+            reviews: (g.reviews || []).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: r.author }))
         }));
 
         const publishers = db.publishers.map(p => ({ name: p.name }));
@@ -106,7 +106,7 @@ export class UtilService {
                 price: g.price,
                 release_date: g.release_date,
                 versions: g.versions.map(v => ({ name: v.version_id, game_files: v.game_files, is_current: v.is_current, approved: v.approved })),
-                reviews: (g.reviews || []).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: { name: r.author.name } }))
+                reviews: (g.reviews || []).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: r.author }))
             }));
         
         const genres = db.genres.map(g => ({ name: g.name, description: g.description }));
@@ -141,7 +141,7 @@ export class UtilService {
             price: g.price,
             release_date: g.release_date,
             versions: g.versions.map(v => ({ name: v.version_id, game_files: v.game_files, is_current: v.is_current, approved: v.approved })),
-            reviews: (g.reviews || []).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: { name: r.author.name } }))
+            reviews: (g.reviews || []).map(r => ({ content: r.content, is_flagged: r.is_flagged, author: r.author }))
         }));
 
         const requests = db.requests.map(r => ({ game: { name: r.game }, game_version: { name: r.game_version }, status: r.status }));
@@ -188,6 +188,7 @@ export class UtilService {
 
             // Addition: model has value, DB does not
             if (modelNode !== undefined && dbModelNode === undefined) {
+                accept('error', `${modelNode} vs ${dbModelNode}`, reportOptions);
                 accept('error', 'Adding item not allowed here', reportOptions);
                 return;
             }

@@ -19,6 +19,7 @@ interface PublisherGameType extends NamedElement {
     genres: @PublisherGenreType[]
     publisher: @PublisherType
     reviews?: PublisherReviewType[]
+    purchased_count?: number
 }
 
 interface PublisherGenreType extends NamedElement {
@@ -55,7 +56,7 @@ interface PublisherTransaction {
 interface PublisherReviewType {
     content: string
     is_flagged: boolean
-    author: @PublisherPlayerType
+    author: string
 }
 
 entry PublisherModel:
@@ -68,7 +69,8 @@ Game returns PublisherGameType:
     'price' price=NUMBER
     'release_date' release_date=DATE
     'versions' versions+=Version (',' versions+=Version)*
-    ('reviews' reviews+=Review  (',' reviews+=Review)*)?;
+    ('reviews' reviews+=Review  (',' reviews+=Review)*)?
+    ('purchased_count' purchased_count=NUMBER)?;
 
 
 Publisher returns PublisherType:
@@ -82,7 +84,7 @@ Version returns PublisherVersionType:
 
 Review returns PublisherReviewType:
     'review' 'content' content=STRING
-    'author' author=[PublisherPlayerType:ID]
+    'author' author=STRING
     'is_flagged' is_flagged=BOOLEAN;
 
 Discount returns PublisherDiscountType:

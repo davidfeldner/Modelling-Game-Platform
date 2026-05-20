@@ -24,6 +24,7 @@ interface GameType extends NamedElement {
     genres: GenreTypeName[]
     publisher: PublisherTypeName
     reviews: ReviewType[]
+    purchased_count: number
 }
 
 interface GenreType extends NamedElement {
@@ -70,7 +71,7 @@ interface AdministratorType extends NamedElement {
 interface ReviewType {
     content: string
     is_flagged: boolean
-    author: PlayerType
+    author: PlayerTypeName
 }
 
 interface PlayerType extends NamedElement {

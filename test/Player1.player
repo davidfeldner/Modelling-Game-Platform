@@ -1,6 +1,6 @@
 player Player1
-	balance 100
-	library [ExampleGame2, ExampleGame, ExampleGame4]
+	balance 955
+	library [ExampleGame2, ExampleGame4, ExampleGame]
 	transactions
 		transaction id Player1_buys_ExampleGame2
 		successful true
@@ -16,7 +16,22 @@ player Player1
 		successful true
 		date 16-05-2026 17:53:04
 		amount 10000
-		game ExampleGame4
+		game ExampleGame4, 
+		transaction id Player1_buys_ExampleGame
+		successful true
+		date 20-05-2026 11:01:26
+		amount 45
+		game ExampleGame, 
+		transaction id Player1_buys_ExampleGame
+		successful true
+		date 20-05-2026 11:05:30
+		amount 45
+		game ExampleGame, 
+		transaction id Player1_buys_ExampleGame
+		successful true
+		date 20-05-2026 11:06:43
+		amount 45
+		game ExampleGame
 
 publisher ExamplePublisher1
 
@@ -34,6 +49,13 @@ game ExampleGame
 	price 50
 	release_date 01-01-2024
 	versions version_id "1.0" game_files "game1.exe"
+	reviews
+		review content "Great game!"
+		author "Player1"
+		is_flagged false,
+		review content "Awful game!"
+		author "Player2"
+		is_flagged false
 
 game ExampleGame2
 	genres Adventure

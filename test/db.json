@@ -15,7 +15,10 @@
       "price": 50,
       "publisher": "ExamplePublisher1",
       "release_date": "01-01-2024",
-      "reviews": [],
+      "reviews": [
+        { "author": "Player1", "content": "Great game!", "is_flagged": false },
+        { "author": "Player2", "content": "Awful game!", "is_flagged": false }
+      ],
       "versions": [
         {
           "approved": true,
@@ -23,7 +26,8 @@
           "is_current": true,
           "version_id": "1.0"
         }
-      ]
+      ],
+      "purchased_count": 3
     },
     {
       "genres": ["Adventure"],
@@ -87,7 +91,8 @@
       ],
       "genres": ["Adventure"],
       "publisher": "ExamplePublisher1",
-      "reviews": []
+      "reviews": [],
+      "purchased_count": 1
     }
   ],
   "genres": [
@@ -96,8 +101,8 @@
   ],
   "players": [
     {
-      "balance": 100,
-      "library": { "games": ["ExampleGame2", "ExampleGame", "ExampleGame4"] },
+      "balance": 955,
+      "library": { "games": ["ExampleGame2", "ExampleGame4", "ExampleGame"] },
       "name": "Player1",
       "transactions": [
         {
@@ -120,12 +125,33 @@
           "successful": true,
           "amount": 10000,
           "game": "ExampleGame4"
+        },
+        {
+          "id": "Player1_buys_ExampleGame",
+          "date": "20-05-2026 11:01:26",
+          "successful": true,
+          "amount": 45,
+          "game": "ExampleGame"
+        },
+        {
+          "id": "Player1_buys_ExampleGame",
+          "date": "20-05-2026 11:05:30",
+          "successful": true,
+          "amount": 45,
+          "game": "ExampleGame"
+        },
+        {
+          "id": "Player1_buys_ExampleGame",
+          "date": "20-05-2026 11:06:43",
+          "successful": true,
+          "amount": 45,
+          "game": "ExampleGame"
         }
       ]
     }
   ],
   "publishers": [
-    { "balance": 1000, "name": "ExamplePublisher1" },
+    { "balance": 1135, "name": "ExamplePublisher1" },
     { "balance": 500, "name": "ExamplePublisher2" }
   ],
   "sales": [],

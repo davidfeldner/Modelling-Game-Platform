@@ -5,7 +5,17 @@ import "shared";
 // From player:
 interface AdministratorPlayerType extends NamedElement {
     balance: number
+    transactions?: AdministratorTransactionType[]
 }
+
+interface AdministratorTransactionType {
+    id: string
+    successful: boolean
+    date: string
+    amount: number
+    game: @AdministratorGameType
+}
+
 // From publisher:
 interface AdministratorPublisherType extends NamedElement {
     balance: number
@@ -55,7 +65,7 @@ interface AdministratorSaleType extends NamedElement {
 interface AdministratorReviewType {
     content: string
     is_flagged: boolean
-    author: @AdministratorPlayerType
+    author: string
 }
 
 
@@ -105,11 +115,20 @@ AdministratorDiscount returns AdministratorDiscountType:
 
 AdministratorReview returns AdministratorReviewType:
     'review' 'content' content=STRING
-    'author' author=[AdministratorPlayerType:ID]
+    'author' author=STRING
     'is_flagged' is_flagged=BOOLEAN;
 
 AdministratorPublisher returns AdministratorPublisherType:
     'publisher' name=ID 'balance' balance=NUMBER;
 
 AdministratorPlayer returns AdministratorPlayerType:
-    'player' name=ID 'balance' balance=NUMBER;
+    'player' name=ID 
+    'balance' balance=NUMBER 
+    ('transactions' transactions+=AdministratorTransaction (',' transactions+=AdministratorTransaction)*)?;
+
+AdministratorTransaction returns AdministratorTransactionType:
+    'transaction' 'id' id=ID
+    'successful' successful=BOOLEAN
+    'date' date=DATETIME
+    'amount' amount=NUMBER
+    'game' game=[AdministratorGameType:ID];
