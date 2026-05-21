@@ -12,6 +12,7 @@ export function registerValidationChecksPublisher(services: SharedServices) {
         PublisherModel: [
             validator.checkGamesChanges,
             validator.checkDiscountsChanges,
+            validator.checkGenresChanges,
             validator.checkNoUnauthorizedChanges,
         ],
         PublisherDiscountType:[
@@ -89,21 +90,6 @@ export class PublisherValidator {
         const modelDiscounts = model.discounts
         const dbDiscounts = db.discounts
 
-        // no changes allowed on discounts for other publishers games
-        const removedDiscounts = dbDiscounts.filter(dbDis => 
-            !modelDiscounts.some(mDis =>
-                 mDis.game.ref.name == dbDis.game &&
-                 mDis.name          == dbDis.name &&
-                 mDis.percentage    == dbDis.percentage &&
-                 mDis.start_date    == dbDis.start_date &&
-                 mDis.end_date      == dbDis.end_date
-            ))
-        removedDiscounts.forEach(d => {
-            if (!dbPublisherGames.includes(d.game)){
-                accept('error', 'Publishers cannot remove or change discount for other games than their own', { node: model });
-            }  
-        })
-
         // check new discounts
         const newDiscounts = modelDiscounts.filter(mDis =>
             !dbDiscounts.some(dbDis =>
@@ -169,9 +155,9 @@ export class PublisherValidator {
             }
 
             // only one current version allowed per game
-            const currentCount = game.versions.filter(v => v.approved && v.is_current).length;
-            if (currentCount > 1) {
-                accept('error', 'There can only be one approved current version for each game', { node: game, property: 'versions' });
+            const currentCount = game.versions.filter(v => v.is_current).length;
+            if (currentCount != 1) {
+                accept('error', 'There can only be one current version for each game', { node: game, property: 'versions' });
             }
 
             // disallow publishers approving existing versions (only admins may approve)
@@ -221,7 +207,7 @@ export class PublisherValidator {
         }
 
         // purchased count must be 0
-        if (game.purchased_count != 0){
+        if (game.purchased_count != 0 && game.purchased_count != undefined){
             accept('error', 'Unpublished games cannot have any purchases', { node: game, property: "purchased_count"});
         }
     }

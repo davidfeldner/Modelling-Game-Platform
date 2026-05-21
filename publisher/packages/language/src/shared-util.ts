@@ -116,7 +116,13 @@ export class UtilService {
         
         const genres = db.genres.map(g => ({ name: g.name, description: g.description }));
 
-        const sales = db.sales.map(s => ({ name: s.name, start_date: s.start_date, end_date: s.end_date, discounts: s.discounts.map(discount => ({ name: discount }))}));
+        const sales = db.sales
+            .filter(sale =>
+                sale.discounts.some(discountName => {
+                    const discount = db.discounts.find(d => d.name === discountName);
+                    return discount && gameNames.includes(discount.game);
+                }))
+            .map(s => ({ name: s.name, start_date: s.start_date, end_date: s.end_date, discounts: s.discounts.map(discount => ({ name: discount }))}));
 
         const discounts = db.discounts
             .filter(d => gameNames.includes(d.game))

@@ -1,0 +1,28 @@
+publisher ExampleStudios
+	balance 30
+
+game TicTacToe
+	genres Puzzle
+	publisher ExampleStudios
+	price 30
+	release_date 21-05-2026
+	versions
+		version_id "1.3" game_files "TicTacToe.exe" is_current false approved false,
+		version_id "1.2" game_files "TicTacToe.exe" is_current true approved true,
+		version_id "1.1" game_files "TicTacToe.exe" is_current false approved false,
+		version_id "1.0" game_files "TicTacToe.exe" is_current false approved true
+	reviews
+		review content "omg new fav"
+			author "gamer123"
+			is_flagged false
+	purchased_count 1
+
+genre Adventure
+	description "Adventure is fun"
+
+genre Action
+	description "Action is fun"
+
+genre Puzzle
+	description "Brain teasers and more"
+

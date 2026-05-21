@@ -1,63 +1,118 @@
-administrator admin
+administrator Admin1
 
+publisher Publisher1
+	balance 1135
+
+publisher Publisher2
+	balance 500
+
+player Player1
+	balance 955
+	transactions
+		transaction id Player1_buys_ExampleGame2
+		successful true
+		date 06-05-2026 09:35:26
+		amount 50
+		game ExampleGame2, 
+		transaction id Player1_buys_ExampleGame
+		successful true
+		date 06-05-2026 09:37:39
+		amount 45
+		game ExampleGame, 
+		transaction id Player1_buys_ExampleGame4
+		successful true
+		date 16-05-2026 17:53:04
+		amount 10000
+		game ExampleGame4
+
+genre Adventure
+	description "Adventure is fun"
 
 genre Action
-description "something"
+	description "Action is fun"
 
-genre FPS
-description "First person shooter"
+game ExampleGame2
+	genres Adventure
+	publisher Publisher2
+	price 100
+	release_date 01-02-2024
+	versions version_id "1.0" game_files "game2.exe" is_current true approved true
 
-publisher GameDev
-balance 10000
+game ExampleGame3
+	genres Adventure
+	publisher Publisher2
+	price 1000
+	release_date 01-02-2024
+	versions version_id "1.0" game_files "game3.exe" is_current true approved true
 
-player player1
-balance 5000
+game ExampleGame4
+	genres Adventure
+	publisher Publisher2
+	price 10000
+	release_date 01-02-2024
+	versions version_id "1.0" game_files "game4.exe" is_current true approved true
 
-game Skyrim
-    genres Action, FPS
-    publisher GameDev
-    price 1099
-    release_date 01-05-2026
-    state "0"
-    versions
-        version_id beta_v1
-        game_files "skyrim_v0.0.1.exe"
-        is_current true
-        approved true,
-        
-        version_id beta_v2
-        game_files "skyrim_v0.0.2.exe"
-        is_current true
-        approved true
+game ExampleGame
+	genres Adventure
+	publisher Publisher1
+	price 50
+	release_date 01-01-2024
+	versions version_id "1.0" game_files "game1.exe" is_current true approved true
+	reviews
+		review content "Great game!"
+		author "Player1"
+		is_flagged false,
+		review content "Awful game!"
+		author "Player2"
+		is_flagged false
 
-game Skyrim2
-    genres Action, FPS
-    publisher GameDev
-    price 1099
-    release_date 01-05-2026
-    state "0"
-    versions
-        version_id beta_v1
-        game_files "skyrim_v0.0.1.exe"
-        is_current true
-        approved true
-    reviews
-        review 
-        content "Good game"
-        author player1
-        is_flagged false
-    
+game ExampleGame5
+	genres Adventure
+	publisher Publisher1
+	price 50
+	release_date 01-01-2024
+	versions version_id "1.0" game_files "game1.exe" is_current true approved true
 
-approval request game Skyrim version beta_v1 status "pending"
+game ExampleGame10
+	genres Adventure
+	publisher Publisher1
+	price 50
+	release_date 01-01-2024
+	versions version_id "1.0" game_files "game1.exe" is_current false approved true, version_id "2.0" game_files "game1.exe" is_current true approved true
 
-discount skyrimDiscount1
-    percentage 40
-    start_date 01-04-2026
-    end_date 01-05-2026
-    game Skyrim
+game ExampleGame11
+	genres Adventure
+	publisher Publisher1
+	price 50
+	release_date 01-01-2024
+	versions version_id "1.0" game_files "game1.exe" is_current true approved false
 
-sale springSale 
-    start_date 01-04-2026
-    end_date 01-05-2026
-    discounts
-        skyrimDiscount1
+approval request game ExampleGame5
+	version "1.0"
+	status APPROVED
+
+approval request game ExampleGame10
+	version "1.0"
+	status APPROVED
+
+approval request game ExampleGame11
+	version "1.0"
+	status PENDING
+
+sale Sale1
+	start_date 01-01-2026
+	end_date 07-11-2026
+	discounts ExampleDiscount1
+
+discount ExampleDiscount1
+	percentage 10
+	start_date 01-01-2026
+	end_date 05-10-2026
+	game ExampleGame
+
+discount ExampleDiscount2
+	percentage 10
+	start_date 05-10-2026
+	end_date 07-11-2026
+	game ExampleGame
+

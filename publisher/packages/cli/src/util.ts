@@ -80,8 +80,8 @@ export function globalReviewDSL(review: ReviewType): string {
     let dsl = ''
 
     dsl += `\treview content "${review.content}"\n`;
-    dsl += `\t\tauthor "${review.author}"\n`;
-    dsl += `\t\tis_flagged ${review.is_flagged}`;
+    dsl += `\t\t\tauthor "${review.author}"\n`;
+    dsl += `\t\t\tis_flagged ${review.is_flagged}`;
     return dsl
 }
 

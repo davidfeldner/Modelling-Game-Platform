@@ -18,6 +18,9 @@ export function registerValidationChecksPlayer(services: SharedServices) {
         PlayerLibraryType: [
             validator.checkLibraryChange,
         ],
+        PlayerReviewType: [
+            validator.checkGameReviewsLegal,
+        ],
         PlayerModel: [
             validator.checkNoUnauthorizedChanges,
         ],
@@ -46,17 +49,21 @@ export class PlayerValidator {
             return;
         }
 
-        library.games.forEach(g => {
-            this.checkGameChange(g.ref, accept);
-        });
+        // Check for duplicate games in library
+        const gameNames = library.games.map(g => g.ref.name);
+        const uniqueGames = new Set(gameNames);
+        if (uniqueGames.size !== gameNames.length) {
+            // Find which games are duplicated
+            const duplicates = gameNames.filter((name, index) => gameNames.indexOf(name) !== index);
+            accept('error', `Library contains duplicate games: ${[...new Set(duplicates)].join(', ')}`, { node: library });
+        }
+
 
         const publishedGameNames = db.games.filter(g => g.versions.some(v => v.is_current && v.approved)).map(g => g.name);
         const dbLibraryGames = db.players.find(p => p.name == playerName).library.games.filter(g => publishedGameNames.includes(g));
         const modelLibraryGames = library.games.map(g => g.ref.name);
         const removedGames = dbLibraryGames.filter(g => !modelLibraryGames.includes(g));
-        if (removedGames.length != 0) {
-            // TODO: games are allowed to be "removed" if there is no current version 
-
+        if (removedGames.length != 0) {            
             accept('error', 'Players cannot remove games from their library', { node: library });
         }
 
@@ -65,8 +72,9 @@ export class PlayerValidator {
             const playerBalance = db.players.find(p => p.name == playerName).balance;
             let sum = 0;
             addedGames.forEach(g => {
-                const game = db.games.find(i => i.name == g)
+                const game = db.games.find(i => i.name == g);
                 sum += this.services.util.UtilService.getDiscountedPrice(game, db.sales, db.discounts);
+                
             });
             if (sum > playerBalance) {
                 accept('error', 'Price of new games in library exceeds player balance', { node: library });
@@ -75,50 +83,19 @@ export class PlayerValidator {
     }
 
 
-    checkGameChange(game: PlayerGameType, accept: ValidationAcceptor): void {
-        console.log("specified game", game.name);
-        const playerName = game.$container.player.name;
+    checkGameReviewsLegal(review: PlayerReviewType, accept: ValidationAcceptor): void {
+        const model = review.$container.$container
+        const playerName = model.player.name
 
         const db = this.services.db.DatabaseService.getDBSnapshot("player", playerName);
         if (db === undefined) {
-            accept('warning', 'Could not check cached games. Try pulling first.', { node: game });
+            accept('warning', 'Could not check cached game review. Try pulling first.', { node: review });
             return;
         }
 
+        const game = review.$container
         const dbGame = db?.games.find(g => g.name == game.name);
-        if (dbGame === undefined) {
-            accept('error', 'Players cannot add new games', { node: game, property: 'name' });
-        }
-        console.log("Found game in DB", dbGame);
-
-        if (game.release_date !== dbGame.release_date) {
-            accept('error', 'Players cannot edit release date of game', { node: game, property: 'release_date' });
-        }
-        if (game.price !== dbGame.price) {
-            accept('error', 'Players cannot edit price of game', { node: game, property: 'price' });
-        }
-        console.log("Game publisher is", game.publisher.ref.name, "DB game publisher is", dbGame.publisher)
-        if (game.publisher.ref.name !== dbGame.publisher) {
-            accept('error', 'Players cannot edit publisher of game', { node: game, property: 'publisher' });
-        }
-
-        // check reviews
-        this.checkGameReviewsLegal(game, dbGame, playerName, accept);
-
-        // check versions
-        console.log("Game versions are", game.versions, "DB game versions are", dbGame.versions);
-        if (this.hasGameVersionsChanged(game.versions, dbGame.versions.filter(v => v.is_current))) {
-            accept('error', 'Players cannot add edit game versions', { node: game, property: 'versions' });
-        }
-
-        // check genres 
-        if (this.hasGameGenresChanged(game.genres, dbGame.genres)) {
-            accept('error', 'Players cannot add edit game genres', { node: game, property: 'genres' });
-        }
-    }
-
-
-    checkGameReviewsLegal(game: PlayerGameType, dbGame: GameType, playerName: string, accept: ValidationAcceptor): void {
+        
         if (dbGame.reviews.length !== game.reviews.length || this.hasReviewsChanged(game, dbGame)) {
             // Deleted reviews - present in DB but not in model
             dbGame.reviews.filter(

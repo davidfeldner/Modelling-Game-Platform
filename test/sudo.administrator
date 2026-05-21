@@ -1,0 +1,162 @@
+administrator sudo
+
+publisher Publisher1
+	balance 1135
+
+publisher Publisher2
+	balance 500
+
+publisher ExampleStudios
+	balance 30
+
+player Player1
+	balance 955
+	transactions
+		transaction id Player1_buys_ExampleGame2
+		successful true
+		date 06-05-2026 09:35:26
+		amount 50
+		game ExampleGame2, 
+		transaction id Player1_buys_ExampleGame
+		successful true
+		date 06-05-2026 09:37:39
+		amount 45
+		game ExampleGame, 
+		transaction id Player1_buys_ExampleGame4
+		successful true
+		date 16-05-2026 17:53:04
+		amount 10000
+		game ExampleGame4
+
+player gamer123
+	balance 20
+	transactions
+		transaction id gamer123_buys_TicTacToe
+		successful true
+		date 21-05-2026 18:29:28
+		amount 30
+		game TicTacToe
+
+genre Adventure
+	description "Adventure is fun"
+
+genre Action
+	description "Action is fun"
+
+genre Puzzle
+	description "Brain teasers and more"
+
+game ExampleGame2
+	genres Adventure
+	publisher Publisher2
+	price 100
+	release_date 01-02-2024
+	versions
+		version_id "1.0" game_files "game2.exe" is_current true approved true
+
+game ExampleGame3
+	genres Adventure
+	publisher Publisher2
+	price 1000
+	release_date 01-02-2024
+	versions
+		version_id "1.0" game_files "game3.exe" is_current true approved true
+
+game ExampleGame4
+	genres Adventure
+	publisher Publisher2
+	price 10000
+	release_date 01-02-2024
+	versions
+		version_id "1.0" game_files "game4.exe" is_current true approved true
+
+game ExampleGame
+	genres Adventure
+	publisher Publisher1
+	price 50
+	release_date 01-01-2024
+	versions
+		version_id "1.0" game_files "game1.exe" is_current true approved true
+	reviews
+		review content "Great game!"
+			author "Player1"
+			is_flagged false,
+		review content "Awful game!"
+			author "Player2"
+			is_flagged false
+
+game ExampleGame5
+	genres Adventure
+	publisher Publisher1
+	price 50
+	release_date 01-01-2024
+	versions
+		version_id "1.0" game_files "game1.exe" is_current true approved true
+
+game ExampleGame10
+	genres Adventure
+	publisher Publisher1
+	price 50
+	release_date 01-01-2024
+	versions
+		version_id "1.0" game_files "game1.exe" is_current false approved true,
+		version_id "2.0" game_files "game1.exe" is_current true approved true
+
+game ExampleGame11
+	genres Adventure
+	publisher Publisher1
+	price 50
+	release_date 01-01-2024
+	versions
+		version_id "1.0" game_files "game1.exe" is_current true approved false
+
+game TicTacToe
+	genres Puzzle
+	publisher ExampleStudios
+	price 30
+	release_date 21-05-2026
+	versions
+		version_id "1.3" game_files "TicTacToe.exe" is_current true approved false,
+		version_id "1.2" game_files "TicTacToe.exe" is_current false approved true,
+		version_id "1.1" game_files "TicTacToe.exe" is_current false approved false,
+		version_id "1.0" game_files "TicTacToe.exe" is_current false approved true
+	reviews
+		review content "omg new fav"
+			author "gamer123"
+			is_flagged false
+
+approval request game ExampleGame5
+	version "1.0"
+	status APPROVED
+
+approval request game ExampleGame10
+	version "1.0"
+	status APPROVED
+
+approval request game ExampleGame11
+	version "1.0"
+	status PENDING
+
+approval request game TicTacToe
+	version "1.0"
+	status APPROVED
+
+approval request game TicTacToe
+	version "1.2"
+	status APPROVED
+
+approval request game TicTacToe
+	version "1.3"
+	status REJECTED
+
+sale Sale1
+	start_date 01-01-2026
+	end_date 07-11-2026
+	discounts ExampleDiscount1
+
+discount ExampleDiscount1
+	percentage 10
+	start_date 01-01-2026
+	end_date 05-10-2026
+	game ExampleGame2
+

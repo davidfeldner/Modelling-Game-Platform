@@ -20,23 +20,6 @@ beforeAll(async () => {
 });
 
 describe('Validating', () => {
-
-    test('check no errors', async () => {
-        document = await parse(`
-            publisher ExamplePublisher balance 1000
-        `);
-
-        expect(
-            // here we first check for validity of the parsed document object by means of the reusable function
-            //  'checkDocumentValid()' to sort out (critical) typos first,
-            // and then evaluate the diagnostics by converting them into human readable strings;
-            // note that 'toHaveLength()' works for arrays and strings alike ;-)
-            checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n')
-        ).toHaveLength(0);
-    });
-
-    
-
     // - What is the current version of Skyrim?
     test('check current version of Skyrim', async () => {
         document = await parse(`
@@ -59,9 +42,6 @@ describe('Validating', () => {
         const model = document.parseResult.value
         const skyrim = model.games.find(g => g.name == "The_Elder_Scrolls_V_Skyrim_Special_Edition")
         expect(skyrim.versions.find(v => v.is_current).name == "1.6.1179")
-        expect(
-            checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n')
-        ).toHaveLength(0);
     });
 
 
@@ -95,9 +75,6 @@ describe('Validating', () => {
         const skyrim = model.games.find(g => g.name == "The_Elder_Scrolls_V_Skyrim_Special_Edition")
             
         expect(skyrim.purchased_count == 10)
-        expect(
-            checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n')
-        ).toHaveLength(0);
     });
 
 

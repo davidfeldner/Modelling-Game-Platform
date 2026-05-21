@@ -19,7 +19,7 @@ function saveDBSnapshotForClient(snapshot: databaseModel, fileType: string, user
     fs.writeFileSync(snapshotPath, JSON.stringify(snapshot));
 }
 
-export function pushToDBPlayer(model: PlayerModel, dbPath='./db.json'): string {
+export function pushToDBPlayer(model: PlayerModel, dbPath = './db.json'): string {
     const db = getCurrentDB(dbPath);
     console.log("Pushing player to DB");
 
@@ -63,7 +63,7 @@ export function pushToDBPlayer(model: PlayerModel, dbPath='./db.json'): string {
         savedPlayer.transactions.push(...transactions);
         savedPlayer.library.games.push(...newGames.map(g => g.name));
         savedPlayer.balance -= totalCost;
-        
+
     }
 
     model.games.forEach(game => {
@@ -92,7 +92,7 @@ export function pushToDBPlayer(model: PlayerModel, dbPath='./db.json'): string {
     return dbPath;
 }
 
-export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): string {
+export function pushToDBPublisher(model: PublisherModel, dbPath = './db.json'): string {
     const db = getCurrentDB(dbPath);
     console.log("Pushing publisher to DB");
 
@@ -113,33 +113,47 @@ export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): st
     const createdGames = model.games.filter(g => !existingGames.includes(g.name));
 
     const requests = createdGames.map(g => {
-        const currentVersion = g.versions.filter(v => v.is_current)[0]
+        const newVersion = g.versions.filter(v => v.is_current)[0]
         return {
             game: `${g.name}`,
-            game_version: `${currentVersion.name}`,
+            game_version: `${newVersion.name}`,
             status: 'PENDING'
         };
     });
 
+    db.games.forEach(g => {
+        const modelGame = model.games.find(game => game.name == g.name)
+        if (!modelGame) return; // skip if modelgame does not exist
+        const dbGameVersions = g.versions.map(v => v.version_id)
+        const newVersions = modelGame.versions.filter(v => !dbGameVersions.includes(v.name) && !v.approved)
+        newVersions.forEach(v => {
+            requests.push({
+                game: `${g.name}`,
+                game_version: `${v.name}`,
+                status: 'PENDING'
+            });
+        })
+    })
+
     const gamesChangedOrAdded = model.games.map(g => ({
-            name: g.name,
-            release_date: g.release_date,
-            price: g.price,
-            versions: g.versions.map(v => ({
-                version_id: v.name,
-                game_files: v.game_files,
-                is_current: v.is_current,
-                approved: v.approved
-            })),
-            genres: g.genres.map(genre => genre.ref.name),
-            publisher: model.publisher.name,
-            reviews: g.reviews.map(r => ({
-                content: r.content,
-                is_flagged: r.is_flagged,
-                author: r.author
-            })),
-            purchased_count: g.purchased_count ?? 0
-        }));
+        name: g.name,
+        release_date: g.release_date,
+        price: g.price,
+        versions: g.versions.map(v => ({
+            version_id: v.name,
+            game_files: v.game_files,
+            is_current: v.is_current,
+            approved: v.approved
+        })),
+        genres: g.genres.map(genre => genre.ref.name),
+        publisher: model.publisher.name,
+        reviews: g.reviews.map(r => ({
+            content: r.content,
+            is_flagged: r.is_flagged,
+            author: r.author
+        })),
+        purchased_count: g.purchased_count ?? 0
+    }));
 
     db.games = [
         ...db.games.filter(g => !gamesChangedOrAdded.some(cg => cg.name === g.name)),
@@ -149,11 +163,11 @@ export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): st
 
     const existingGenres = db.genres.map(g => g.name);
     const createdGenres = model.genres
-    .filter(g => !existingGenres.includes(g.name))
-    .map(g => ({
-        name: g.name,
-        description: g.description
-    }));
+        .filter(g => !existingGenres.includes(g.name))
+        .map(g => ({
+            name: g.name,
+            description: g.description
+        }));
 
     db.genres.push(...createdGenres);
 
@@ -173,18 +187,20 @@ export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): st
         throw new Error("Publishers cannot create discounts for games they do not publish");
     }
 
-    if (removed.some(d => !publisherGames.has(d.game))) {
-        throw new Error("Publishers cannot remove discounts for games they do not publish");
-    }
+    const discountsForOtherPublishers = db.discounts.filter(d => !publisherGames.has(d.game));
 
-    db.discounts = model.discounts.map(d => ({
+
+    // Add/update only this publisher's discounts
+    const publisherDiscounts = model.discounts.map(d => ({
         name: d.name,
         game: d.game.ref.name,
         percentage: d.percentage,
         start_date: d.start_date,
         end_date: d.end_date
     }));
-    
+
+    db.discounts = [...discountsForOtherPublishers, ...publisherDiscounts];
+
     const updates: databaseModel = { ...db };
 
     console.dir(db, { depth: null });
@@ -194,7 +210,7 @@ export function pushToDBPublisher(model: PublisherModel, dbPath='./db.json'): st
     return dbPath;
 }
 
-export function pushToDBAdministrator(model: AdministratorModel, dbPath='./db.json'): string {
+export function pushToDBAdministrator(model: AdministratorModel, dbPath = './db.json'): string {
     const db = getCurrentDB(dbPath);
     console.log("Pushing administrator to DB");
 
@@ -257,7 +273,7 @@ export function pushToDBAdministrator(model: AdministratorModel, dbPath='./db.js
     return dbPath;
 }
 
-export function createUser(userType: string, userID: string, dbPath='./db.json'): void {
+export function createUser(userType: string, userID: string, dbPath = './db.json'): void {
     const db = getCurrentDB(dbPath);
     if (userType === 'player') {
         if (db.players.some(p => p.name === userID)) {
@@ -291,7 +307,7 @@ export function createUser(userType: string, userID: string, dbPath='./db.json')
     fs.writeFileSync(dbPath, JSON.stringify(db));
 }
 
-export function generateFromDB(fileType: string, userID: string, dbPath='./db.json', clientFilePath?: string): string {
+export function generateFromDB(fileType: string, userID: string, dbPath = './db.json', clientFilePath?: string): string {
     const json: databaseModel = getCurrentDB(dbPath);
     saveDBSnapshotForClient(json, fileType, userID);
     validateDBNotEmpty(json);
@@ -341,7 +357,7 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
             dsl += `\tpublisher ${`${game.publisher}`}\n`;
             dsl += `\tprice ${game.price}\n`;
             dsl += `\trelease_date ${game.release_date}\n`;
-            dsl += `\tversions ${game.versions?.filter(v => v.is_current).map(v => `version_id "${v.version_id}" game_files "${v.game_files}"`).join(', ')}\n`;
+            dsl += `\tversions\n\t${game.versions?.filter(v => v.is_current).map(v => `\tversion_id "${v.version_id}" game_files "${v.game_files}"`).join(',\n\t')}\n`;
             if (game.reviews?.length != 0) {
                 // Show not flagged reviews and player's own flagged reviews
                 dsl += `\treviews\n\t${game.reviews.filter(r => !r.is_flagged || r.author === userID).map(r => globalReviewDSL(r)).join(',\n\t')}\n`
@@ -379,7 +395,7 @@ function generatePublisherFile(db: databaseModel, userID: string): string {
         dsl += `\tpublisher ${game.publisher}\n`;
         dsl += `\tprice ${game.price}\n`;
         dsl += `\trelease_date ${game.release_date}\n`;
-        dsl += `\tversions ${game.versions?.map(v => `version_id "${v.version_id}" game_files "${v.game_files}" is_current ${v.is_current} approved ${v.approved}`).join(', ')}\n`;
+        dsl += `\tversions\n\t${game.versions?.map(v => `\tversion_id "${v.version_id}" game_files "${v.game_files}" is_current ${v.is_current} approved ${v.approved}`).join(',\n\t')}\n`;
         if (game.reviews?.length != 0) {
             // Only show non-flagged reviews to publishers
             dsl += `\treviews\n\t${game.reviews.filter(r => !r.is_flagged).map(r => globalReviewDSL(r)).join(',\n\t')}\n`;
@@ -390,7 +406,16 @@ function generatePublisherFile(db: databaseModel, userID: string): string {
 
     const publisherGameNames = publisherGames.map(g => g.name);
 
-    db.sales.forEach(sale => {
+
+    const salesIncludingPublisherGames = db.sales.filter(sale =>
+        sale.discounts.some(discountName => {
+            const discount = db.discounts.find(d => d.name === discountName);
+            return discount && publisherGameNames.includes(discount.game);
+        })
+    );
+
+    // only show sales that includes publisher games
+    salesIncludingPublisherGames.forEach(sale => {
         dsl += `sale ${sale.name}\n`;
         dsl += `\tstart_date ${sale.start_date}\n`;
         dsl += `\tend_date ${sale.end_date}\n`
@@ -438,7 +463,7 @@ function generateAdministratorFile(db: databaseModel, userID: string): string {
         dsl += `\tpublisher ${game.publisher}\n`;
         dsl += `\tprice ${game.price}\n`;
         dsl += `\trelease_date ${game.release_date}\n`;
-        dsl += `\tversions ${game.versions?.map(v => `version_id "${v.version_id}" game_files "${v.game_files}" is_current ${v.is_current} approved ${v.approved}`).join(', ')}\n`;
+        dsl += `\tversions\n\t${game.versions?.map(v => `\tversion_id "${v.version_id}" game_files "${v.game_files}" is_current ${v.is_current} approved ${v.approved}`).join(',\n\t')}\n`;
         if (game.reviews?.length != 0) {
             dsl += `\treviews\n\t${game.reviews.map(r => globalReviewDSL(r)).join(',\n\t')}\n`
         }
