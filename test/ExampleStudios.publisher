@@ -7,8 +7,8 @@ game TicTacToe
 	price 30
 	release_date 21-05-2026
 	versions
-		version_id "1.3" game_files "TicTacToe.exe" is_current false approved false,
-		version_id "1.2" game_files "TicTacToe.exe" is_current true approved true,
+		version_id "1.3" game_files "TicTacToe.exe" is_current true approved true,
+		version_id "1.2" game_files "TicTacToe.exe" is_current false approved true,
 		version_id "1.1" game_files "TicTacToe.exe" is_current false approved false,
 		version_id "1.0" game_files "TicTacToe.exe" is_current false approved true
 	reviews
@@ -16,6 +16,14 @@ game TicTacToe
 			author "gamer123"
 			is_flagged false
 	purchased_count 1
+
+game Tetris
+	genres Puzzle
+	publisher ExampleStudios
+	price 10
+	release_date 21-05-2026
+	versions 
+		version_id "1.0" game_files "TicTacToe.exe" is_current true approved false
 
 genre Adventure
 	description "Adventure is fun"

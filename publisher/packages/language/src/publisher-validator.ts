@@ -144,6 +144,14 @@ export class PublisherValidator {
                 accept('error', 'Publisher cannot remove existing game versions', { node: game, property: 'versions' });
             }
 
+            // prevent previously published games are hidden by using unapproved version as current
+            const dbApprovedVersions = game.versions.filter(v => v.approved)
+            if (dbApprovedVersions.length >= 1){
+                if (!dbApprovedVersions.some(v => v.is_current)){
+                    accept('error', 'Current version must be approved, once a game has been published', { node: game, property: 'versions' });
+                }
+            }
+
             const addedVersionIds = game.versions.map(v => v.name).filter(id => !dbVersionIds.includes(id));
             for (const versionId of addedVersionIds) {
                 const version = game.versions.find(v => v.name === versionId);
@@ -157,7 +165,7 @@ export class PublisherValidator {
             // only one current version allowed per game
             const currentCount = game.versions.filter(v => v.is_current).length;
             if (currentCount != 1) {
-                accept('error', 'There can only be one current version for each game', { node: game, property: 'versions' });
+                accept('error', 'There must be one current version for each game', { node: game, property: 'versions' });
             }
 
             // disallow publishers approving existing versions (only admins may approve)
