@@ -83,7 +83,7 @@ export default function (): void {
         .action(pullAction);
 
 
-     program
+    program
         .command('signup')
         .argument('<fileType>', `type of file to generate (possible types: publisher, player, administrator)`)
         .argument('<userID>', `id of the user to generate the file for`)

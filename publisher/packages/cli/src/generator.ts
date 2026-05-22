@@ -147,7 +147,7 @@ export function pushToDBPublisher(model: PublisherModel, dbPath = './db.json'): 
         })),
         genres: g.genres.map(genre => genre.ref.name),
         publisher: model.publisher.name,
-        reviews: db.games.find(game => game.name==g.name)?.reviews ?? [], // ignore changes to reviews
+        reviews: db.games.find(game => game.name == g.name)?.reviews ?? [], // ignore changes to reviews
         purchased_count: g.purchased_count ?? 0
     }));
 

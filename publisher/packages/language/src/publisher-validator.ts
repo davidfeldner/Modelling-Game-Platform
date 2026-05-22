@@ -15,7 +15,7 @@ export function registerValidationChecksPublisher(services: SharedServices) {
             validator.checkGenresChanges,
             validator.checkNoUnauthorizedChanges,
         ],
-        PublisherDiscountType:[
+        PublisherDiscountType: [
             validator.checkDiscountsDoNotOverlap,
             validator.checkDiscountPercentage,
         ],
@@ -50,32 +50,32 @@ export class PublisherValidator {
         }
 
         // existing genres cannot be removed or edited
-        const removedGenres = db.genres.filter(dbGen => 
-            !model.genres.some(mGen => 
-                dbGen.description   == mGen.description &&
-                dbGen.name          == mGen.name
+        const removedGenres = db.genres.filter(dbGen =>
+            !model.genres.some(mGen =>
+                dbGen.description == mGen.description &&
+                dbGen.name == mGen.name
             )
         )
 
-        if (removedGenres.length != 0){
+        if (removedGenres.length != 0) {
             accept('error', 'Publishers cannot remove or change existing genres', { node: model });
         }
 
         // new genres must have unique name
-        const newGenres = model.genres.filter(dbGen => 
-            !db.genres.some(mGen => 
-                dbGen.description   == mGen.description &&
-                dbGen.name          == mGen.name
+        const newGenres = model.genres.filter(dbGen =>
+            !db.genres.some(mGen =>
+                dbGen.description == mGen.description &&
+                dbGen.name == mGen.name
             )
         )
 
         newGenres.forEach(g => {
             if (db.genres.some(dbGen => dbGen.name == g.name)) {
-                accept('error', 'Genre name must be unique', { node: g, property: "name"});
+                accept('error', 'Genre name must be unique', { node: g, property: "name" });
             }
         })
     }
-    
+
     checkDiscountsChanges(model: PublisherModel, accept: ValidationAcceptor): void {
         const publisherName = model.publisher.name
 
@@ -94,16 +94,16 @@ export class PublisherValidator {
         const newDiscounts = modelDiscounts.filter(mDis =>
             !dbDiscounts.some(dbDis =>
                 mDis.game.ref.name == dbDis.game &&
-                 mDis.name          == dbDis.name &&
-                 mDis.percentage    == dbDis.percentage &&
-                 mDis.start_date    == dbDis.start_date &&
-                 mDis.end_date      == dbDis.end_date
+                mDis.name == dbDis.name &&
+                mDis.percentage == dbDis.percentage &&
+                mDis.start_date == dbDis.start_date &&
+                mDis.end_date == dbDis.end_date
             )
         )
 
         newDiscounts.forEach(d => {
             // should be for publisher's game
-            if (!dbPublisherGames.includes(d.game.ref.name)){
+            if (!dbPublisherGames.includes(d.game.ref.name)) {
                 accept('error', 'Publishers can only create discounts for their own games', { node: d, property: "game" });
             }
         })
@@ -118,11 +118,11 @@ export class PublisherValidator {
             return;
         }
 
-        const dbPublisherGames = db.games.filter(g => g.publisher === publisherName).map(g => g.name); 
+        const dbPublisherGames = db.games.filter(g => g.publisher === publisherName).map(g => g.name);
         const modelGames = model.games.map(g => g.name);
         const removedGames = dbPublisherGames.filter(g => !modelGames.includes(g))
-        if (removedGames.length > 0 ){
-            accept('error', 'Publisher cannot remove existing game or edit existing name', { node: model, property: "games"});
+        if (removedGames.length > 0) {
+            accept('error', 'Publisher cannot remove existing game or edit existing name', { node: model, property: "games" });
         }
 
         const newGames = modelGames.filter(g => !dbPublisherGames.includes(g))
@@ -146,8 +146,8 @@ export class PublisherValidator {
 
             // prevent previously published games are hidden by using unapproved version as current
             const dbApprovedVersions = game.versions.filter(v => v.approved)
-            if (dbApprovedVersions.length >= 1){
-                if (!dbApprovedVersions.some(v => v.is_current)){
+            if (dbApprovedVersions.length >= 1) {
+                if (!dbApprovedVersions.some(v => v.is_current)) {
                     accept('error', 'Current version must be approved, once a game has been published', { node: game, property: 'versions' });
                 }
             }
@@ -179,13 +179,13 @@ export class PublisherValidator {
             // disallow publishers changing reviews
             const notFlaggedReviews = dbGame.reviews.filter(g => !g.is_flagged)
             for (const modelReview of game.reviews) {
-                const matchingDbVersion = notFlaggedReviews.find(dbReview => 
-                modelReview.author === dbReview.author && 
-                modelReview.content === dbReview.content && 
-                modelReview.is_flagged === dbReview.is_flagged
+                const matchingDbVersion = notFlaggedReviews.find(dbReview =>
+                    modelReview.author === dbReview.author &&
+                    modelReview.content === dbReview.content &&
+                    modelReview.is_flagged === dbReview.is_flagged
                 );
                 if (!matchingDbVersion) {
-                accept('error', 'Publishers cannot change reviews', { node: modelReview });
+                    accept('error', 'Publishers cannot change reviews', { node: modelReview });
                 }
             }
         }
@@ -194,42 +194,42 @@ export class PublisherValidator {
 
     checkNewGame(game: PublisherGameType, dbGames: String[], accept: ValidationAcceptor): void {
         // name should be unique
-        if (dbGames.includes(game.name)){
-            accept('error', 'Another game with this name already exists', { node: game, property: "name"});
+        if (dbGames.includes(game.name)) {
+            accept('error', 'Another game with this name already exists', { node: game, property: "name" });
         }
-        
+
         // price
-        if (game.price < 0){
-            accept('error', 'Game price cannot be negative', { node: game, property: "price"});
+        if (game.price < 0) {
+            accept('error', 'Game price cannot be negative', { node: game, property: "price" });
         }
 
         // release date
         const releaseTime = this.services.util.UtilService.parseDate(game.release_date)?.getTime();
         const nowTime = new Date().getTime();
-        if (releaseTime > nowTime){
-            accept('error', 'Game release date cannot be in the future', { node: game, property: "release_date"});
+        if (releaseTime > nowTime) {
+            accept('error', 'Game release date cannot be in the future', { node: game, property: "release_date" });
         }
 
         // versions
         if (game.versions.length != 1) {
-            accept('error', 'Unpublished games must only have an initial version', { node: game, property: "versions"});
+            accept('error', 'Unpublished games must only have an initial version', { node: game, property: "versions" });
         }
         const initVersion = game.versions[0];
         if (!initVersion.is_current) {
             accept('error', 'Initial version must be the current version', { node: initVersion, property: 'is_current' });
         }
         if (initVersion.approved) {
-            accept('error', 'Initial version must be unapproved', { node: initVersion, property: "approved"});
+            accept('error', 'Initial version must be unapproved', { node: initVersion, property: "approved" });
         }
 
         // reviews
-        if (game.reviews.length != 0){
-            accept('error', 'Unpublished games cannot have reviews', { node: game, property: "reviews"});
+        if (game.reviews.length != 0) {
+            accept('error', 'Unpublished games cannot have reviews', { node: game, property: "reviews" });
         }
 
         // purchased count must be 0
-        if (game.purchased_count != 0 && game.purchased_count != undefined){
-            accept('error', 'Unpublished games cannot have any purchases', { node: game, property: "purchased_count"});
+        if (game.purchased_count != 0 && game.purchased_count != undefined) {
+            accept('error', 'Unpublished games cannot have any purchases', { node: game, property: "purchased_count" });
         }
     }
 
@@ -262,7 +262,7 @@ export class PublisherValidator {
 
 
     checkDiscountPercentage(discount: PublisherDiscountType, accept: ValidationAcceptor): void {
-        if (0 >= discount.percentage || discount.percentage >= 100){
+        if (0 >= discount.percentage || discount.percentage >= 100) {
             accept('error', 'Discounts must be above 0 and below 100', { node: discount, property: "percentage" });
         }
     }
@@ -271,8 +271,8 @@ export class PublisherValidator {
     checkDiscountPeriodsWithinSalePeriod(sale: PublisherSaleType, accept: ValidationAcceptor): void {
         const saleStart = this.services.util.UtilService.parseDate(sale.start_date);
         const saleEnd = this.services.util.UtilService.parseDate(sale.end_date);
-        
-        for (const discount of sale.discounts) {      
+
+        for (const discount of sale.discounts) {
             const discountStart = this.services.util.UtilService.parseDate(discount.ref.start_date);
             const discountEnd = this.services.util.UtilService.parseDate(discount.ref.end_date);
 

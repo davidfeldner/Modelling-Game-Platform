@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { URI } from 'langium';
-import { DiscountType, GameType, GenreType, ReviewType, SaleType, TransactionType, databaseModel } from '../../language/src/db-model.js';
+import { DiscountType, GenreType, ReviewType, TransactionType, databaseModel } from '../../language/src/db-model.js';
 
 export async function extractDocument(fileName: string, services: LangiumCoreServices): Promise<LangiumDocument> {
     const extensions = services.LanguageMetaData.fileExtensions;

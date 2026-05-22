@@ -113,7 +113,7 @@ export class UtilService {
                 purchased_count: g.purchased_count
             }));
         const gameNames = games.map(g => g.name);
-        
+
         const genres = db.genres.map(g => ({ name: g.name, description: g.description }));
 
         const sales = db.sales
@@ -122,7 +122,7 @@ export class UtilService {
                     const discount = db.discounts.find(d => d.name === discountName);
                     return discount && gameNames.includes(discount.game);
                 }))
-            .map(s => ({ name: s.name, start_date: s.start_date, end_date: s.end_date, discounts: s.discounts.map(discount => ({ name: discount }))}));
+            .map(s => ({ name: s.name, start_date: s.start_date, end_date: s.end_date, discounts: s.discounts.map(discount => ({ name: discount })) }));
 
         const discounts = db.discounts
             .filter(d => gameNames.includes(d.game))
@@ -168,7 +168,7 @@ export class UtilService {
         const publishers = db.publishers.map(p => ({ name: p.name, balance: p.balance }));
 
         const players = db.players.map(p => ({ name: p.name, balance: p.balance, transactions: (p.transactions || []).map(t => ({ id: t.id, successful: t.successful, date: t.date, amount: t.amount, game: { name: t.game } })) }));
-        
+
         const administrator = {
             name: dbAdmin.name
         };
@@ -185,7 +185,7 @@ export class UtilService {
         };
     }
 
-    
+
     assertNoUnauthorizedChanges(
         modelNode: any,
         dbModelNode: any,

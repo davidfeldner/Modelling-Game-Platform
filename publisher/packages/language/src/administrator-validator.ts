@@ -32,8 +32,8 @@ export class AdministratorValidator {
         if (saleStart > saleEnd) {
             accept('error', 'Sale end must be after sale start', { node: sale });
         }
-        
-        for (const discount of sale.discounts) {      
+
+        for (const discount of sale.discounts) {
             const discountStart = this.services.util.UtilService.parseDate(discount.ref.start_date);
             const discountEnd = this.services.util.UtilService.parseDate(discount.ref.end_date);
 
@@ -45,18 +45,18 @@ export class AdministratorValidator {
     }
 
     checkNoUnauthorizedChanges(model: AdministratorModel, accept: ValidationAcceptor): void {
-            const db = this.services.db.DatabaseService.getDBSnapshot("administrator", model.administrator.name);
-            if (db === undefined) {
-                accept('warning', 'Could not check cached data. Try pulling first.', { node: model });
-                return;
-            }
-    
-            const dbModel = this.services.util.UtilService.buildAdministratorModelFromDBModel(db, model.administrator.name);
-            const allowed = [
-                { path: 'requests[*].status', exactMatch: true },
-                { path: 'sales[*]', exactMatch: false },
-                { path: 'games[*].reviews[*].is_flagged', exactMatch: true },
-            ];
-            this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, accept, model, allowed);
+        const db = this.services.db.DatabaseService.getDBSnapshot("administrator", model.administrator.name);
+        if (db === undefined) {
+            accept('warning', 'Could not check cached data. Try pulling first.', { node: model });
+            return;
+        }
+
+        const dbModel = this.services.util.UtilService.buildAdministratorModelFromDBModel(db, model.administrator.name);
+        const allowed = [
+            { path: 'requests[*].status', exactMatch: true },
+            { path: 'sales[*]', exactMatch: false },
+            { path: 'games[*].reviews[*].is_flagged', exactMatch: true },
+        ];
+        this.services.util.UtilService.assertNoUnauthorizedChanges(model, dbModel, accept, model, allowed);
     }
 }

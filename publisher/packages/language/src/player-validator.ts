@@ -63,7 +63,7 @@ export class PlayerValidator {
         const dbLibraryGames = db.players.find(p => p.name == playerName).library.games.filter(g => publishedGameNames.includes(g));
         const modelLibraryGames = library.games.map(g => g.ref.name);
         const removedGames = dbLibraryGames.filter(g => !modelLibraryGames.includes(g));
-        if (removedGames.length != 0) {            
+        if (removedGames.length != 0) {
             accept('error', 'Players cannot remove games from their library', { node: library });
         }
 
@@ -74,7 +74,7 @@ export class PlayerValidator {
             addedGames.forEach(g => {
                 const game = db.games.find(i => i.name == g);
                 sum += this.services.util.UtilService.getDiscountedPrice(game, db.sales, db.discounts);
-                
+
             });
             if (sum > playerBalance) {
                 accept('error', 'Price of new games in library exceeds player balance', { node: library });
@@ -95,7 +95,7 @@ export class PlayerValidator {
 
         const game = review.$container
         const dbGame = db?.games.find(g => g.name == game.name);
-        
+
         if (dbGame.reviews.length !== game.reviews.length || this.hasReviewsChanged(game, dbGame)) {
             // Deleted reviews - present in DB but not in model
             dbGame.reviews.filter(
