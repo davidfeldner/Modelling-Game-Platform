@@ -175,6 +175,19 @@ export class PublisherValidator {
                     accept('error', 'Publishers cannot mark versions as approved', { node: modelVersion, property: 'approved' });
                 }
             }
+
+            // disallow publishers changing reviews
+            const notFlaggedReviews = dbGame.reviews.filter(g => !g.is_flagged)
+            for (const modelReview of game.reviews) {
+                const matchingDbVersion = notFlaggedReviews.find(dbReview => 
+                modelReview.author === dbReview.author && 
+                modelReview.content === dbReview.content && 
+                modelReview.is_flagged === dbReview.is_flagged
+                );
+                if (!matchingDbVersion) {
+                accept('error', 'Publishers cannot change reviews', { node: modelReview });
+                }
+            }
         }
     }
 
@@ -307,6 +320,7 @@ export class PublisherValidator {
             { path: 'games[*].price', exactMatch: true },
             { path: 'games[*].release_date', exactMatch: true },
             { path: 'games[*].versions[*]', exactMatch: false },
+            { path: 'games[*].reviews[*]', exactMatch: false }, // Reviews are removed if flagged
             { path: 'genres[*]', exactMatch: false },
             { path: 'discounts[*]', exactMatch: false },
         ];

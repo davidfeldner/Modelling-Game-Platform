@@ -72,8 +72,8 @@ export function pushToDBPlayer(model: PlayerModel, dbPath = './db.json'): string
             const review = game.reviews.find(r => r.author === model.player.name);
             const existingReview = dbGame.reviews.find(r => r.author === model.player.name);
             if (existingReview) {
+                existingReview.is_flagged = review.content != existingReview.content ? false : true
                 existingReview.content = review.content;
-                existingReview.is_flagged = false
             } else {
                 dbGame.reviews.push({
                     author: model.player.name,
@@ -147,11 +147,7 @@ export function pushToDBPublisher(model: PublisherModel, dbPath = './db.json'): 
         })),
         genres: g.genres.map(genre => genre.ref.name),
         publisher: model.publisher.name,
-        reviews: g.reviews.map(r => ({
-            content: r.content,
-            is_flagged: r.is_flagged,
-            author: r.author
-        })),
+        reviews: db.games.find(game => game.name==g.name)?.reviews ?? [], // ignore changes to reviews
         purchased_count: g.purchased_count ?? 0
     }));
 
@@ -396,9 +392,10 @@ function generatePublisherFile(db: databaseModel, userID: string): string {
         dsl += `\tprice ${game.price}\n`;
         dsl += `\trelease_date ${game.release_date}\n`;
         dsl += `\tversions\n\t${game.versions?.map(v => `\tversion_id "${v.version_id}" game_files "${v.game_files}" is_current ${v.is_current} approved ${v.approved}`).join(',\n\t')}\n`;
-        if (game.reviews?.length != 0) {
+        const notFlaggedReviews = game.reviews.filter(r => !r.is_flagged)
+        if (notFlaggedReviews.length != 0) {
             // Only show non-flagged reviews to publishers
-            dsl += `\treviews\n\t${game.reviews.filter(r => !r.is_flagged).map(r => globalReviewDSL(r)).join(',\n\t')}\n`;
+            dsl += `\treviews\n\t${notFlaggedReviews.map(r => globalReviewDSL(r)).join(',\n\t')}\n`;
         }
         dsl += `\tpurchased_count ${game.purchased_count}\n`;
         dsl += `\n`
