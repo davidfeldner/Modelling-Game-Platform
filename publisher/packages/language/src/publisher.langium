@@ -2,12 +2,6 @@ grammar Publisher
 
 import "shared"
 
-// From player:
-interface PublisherPlayerType extends NamedElement {
-    balance: number
-}
-
-
 interface PublisherType extends NamedElement {
     balance: number
 }
