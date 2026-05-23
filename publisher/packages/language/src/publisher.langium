@@ -45,14 +45,6 @@ interface PublisherDiscountType extends NamedElement {
     game: @PublisherGameType
 }
 
-interface PublisherTransaction {
-    id: string
-    successful: boolean
-    date: string
-    amount: number
-    game: @PublisherGameType
-}
-
 interface PublisherReviewType {
     content: string
     is_flagged: boolean
