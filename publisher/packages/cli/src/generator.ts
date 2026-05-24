@@ -8,13 +8,32 @@ const services = {
     utilService: new UtilService(),
 };
 
+const emptyDb: databaseModel = {
+    discounts: [],
+    games: [],
+    publishers: [],
+    administrators: [],
+    players: [],
+    genres: [],
+    requests: [],
+    sales: [],
+    reviews: [],
+    transactions: []
+}
+
 function getCurrentDB(dbPath: string): databaseModel {
-    const dbData = fs.existsSync(dbPath) ? fs.readFileSync(dbPath).toString() : '{}';
+    let dbData: string;
+    if (!fs.existsSync(dbPath))
+        fs.writeFileSync(dbPath, JSON.stringify(emptyDb))
+    dbData = fs.readFileSync(dbPath).toString();
     const db: databaseModel = JSON.parse(dbData);
+    validateDBNotEmpty(db); // Validates that expected values are in database, as assumed in cast to databaseModel
+
     return db;
 }
 
 function saveDBSnapshotForClient(snapshot: databaseModel, fileType: string, userID: string) {
+    if (!fs.existsSync("./db_snapshots/")) fs.mkdirSync("./db_snapshots")
     const snapshotPath = `./db_snapshots/${userID}.${fileType}.snapshot.json`;
     fs.writeFileSync(snapshotPath, JSON.stringify(snapshot));
 }
@@ -306,7 +325,6 @@ export function createUser(userType: string, userID: string, dbPath = './db.json
 export function generateFromDB(fileType: string, userID: string, dbPath = './db.json', clientFilePath?: string): string {
     const json: databaseModel = getCurrentDB(dbPath);
     saveDBSnapshotForClient(json, fileType, userID);
-    validateDBNotEmpty(json);
 
     let generatedFile = "";
     if (fileType === 'player') {
