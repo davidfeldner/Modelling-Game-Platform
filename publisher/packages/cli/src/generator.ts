@@ -465,8 +465,9 @@ function generateAdministratorFile(db: databaseModel, userID: string): string {
         dsl += `player ${p.name}\n`;
         dsl += `\tbalance ${p.balance}\n`;
         if (p.transactions?.length != 0) {
-            dsl += `\ttransactions\n\t${p.transactions.map(t => globalTransactionDSL(t)).join(', \n\t')}\n\n`;
+            dsl += `\ttransactions\n\t${p.transactions.map(t => globalTransactionDSL(t)).join(', \n\t')}\n`;
         }
+        dsl += `\n`
     });
 
     db.genres.forEach(genre => {

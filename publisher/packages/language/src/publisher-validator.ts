@@ -93,7 +93,7 @@ export class PublisherValidator {
         // check new discounts
         const newDiscounts = modelDiscounts.filter(mDis =>
             !dbDiscounts.some(dbDis =>
-                mDis.game.ref.name == dbDis.game &&
+                mDis.game?.ref?.name == dbDis.game &&
                 mDis.name == dbDis.name &&
                 mDis.percentage == dbDis.percentage &&
                 mDis.start_date == dbDis.start_date &&
@@ -103,8 +103,12 @@ export class PublisherValidator {
 
         newDiscounts.forEach(d => {
             // should be for publisher's game
-            if (!dbPublisherGames.includes(d.game.ref.name)) {
+            if (!dbPublisherGames.includes(d.game?.ref?.name)) {
                 accept('error', 'Publishers can only create discounts for their own games', { node: d, property: "game" });
+            }
+             
+            if (!d.game?.ref?.versions?.some(v => v.is_current && v.approved)) {
+                accept('error', 'Publishers can only create discounts for games with an approved version', { node: d, property: "game" });
             }
         })
     }
@@ -213,13 +217,15 @@ export class PublisherValidator {
         // versions
         if (game.versions.length != 1) {
             accept('error', 'Unpublished games must only have an initial version', { node: game, property: "versions" });
-        }
-        const initVersion = game.versions[0];
-        if (!initVersion.is_current) {
-            accept('error', 'Initial version must be the current version', { node: initVersion, property: 'is_current' });
-        }
-        if (initVersion.approved) {
-            accept('error', 'Initial version must be unapproved', { node: initVersion, property: "approved" });
+            return
+        } else {
+            const initVersion = game.versions[0];
+            if (!initVersion.is_current) {
+                accept('error', 'Initial version must be the current version', { node: initVersion, property: 'is_current' });
+            }
+            if (initVersion.approved) {
+                accept('error', 'Initial version must be unapproved', { node: initVersion, property: "approved" });
+            }
         }
 
         // reviews
@@ -244,7 +250,7 @@ export class PublisherValidator {
         const container = discount.$container;
         const allDiscounts = AstUtils.streamAllContents(container)
             .filter(isPublisherDiscountType)
-            .filter(d => d.game.ref.name == discount.game.ref.name)
+            .filter(d => d.game?.ref?.name == discount.game?.ref?.name)
             .toArray();
 
         for (const otherDiscount of allDiscounts) {
