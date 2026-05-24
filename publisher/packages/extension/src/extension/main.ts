@@ -7,11 +7,11 @@ import * as fs from 'fs/promises';
 
 let client: LanguageClient;
 let extensionTerminal: vscode.Terminal | undefined;
-
+const terminalName = 'Game Extension'
 
 function getOrCreateTerminal(context: vscode.ExtensionContext): vscode.Terminal {
     if (!extensionTerminal) {
-        extensionTerminal = window.createTerminal('My Extension');
+        extensionTerminal = window.terminals.find(t => t.name === terminalName) ?? window.createTerminal(terminalName);
 
         context.subscriptions.push(
             window.onDidCloseTerminal((terminal) => {
