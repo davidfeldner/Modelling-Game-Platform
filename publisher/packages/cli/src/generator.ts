@@ -369,8 +369,9 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
         dsl += `\tdiscounts ${sale.discounts.join(', ')}\n\n`;
     });
 
-    db.discounts.forEach(discount => {
-        dsl += globalDiscountDSL(discount)
+    db.discounts.filter(d => publishedGameNames.includes(d.game))
+        .forEach(discount => {
+            dsl += globalDiscountDSL(discount)
     });
 
     return dsl;

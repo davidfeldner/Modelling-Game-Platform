@@ -68,10 +68,10 @@ export function globalTransactionDSL(transaction: TransactionType): string {
     let dsl = ''
 
     dsl += `\ttransaction id ${transaction.id}\n`;
-    dsl += `\t\tsuccessful ${transaction.successful}\n`;
-    dsl += `\t\tdate ${transaction.date}\n`;
-    dsl += `\t\tamount ${transaction.amount}\n`;
-    dsl += `\t\tgame ${transaction.game}`
+    dsl += `\t\t\tsuccessful ${transaction.successful}\n`;
+    dsl += `\t\t\tdate ${transaction.date}\n`;
+    dsl += `\t\t\tamount ${transaction.amount}\n`;
+    dsl += `\t\t\tgame ${transaction.game}`
 
     return dsl
 }

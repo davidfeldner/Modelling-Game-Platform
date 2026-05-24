@@ -14,16 +14,16 @@ export class UtilService {
 
         // Check all discounts in sales
         for (const sale of sales) {
-            const saleStart = new Date(sale.start_date).getTime();
-            const saleEnd = new Date(sale.end_date).getTime();
+            const saleStart = this.parseDate(sale.start_date)?.getTime();
+            const saleEnd = this.parseDate(sale.end_date).getTime();
 
             if (nowTime < saleStart || nowTime > saleEnd) continue;
             // Join discounts by name to get full discount details
             const discounts = sale.discounts.map(d => standaloneDiscounts.find(ad => ad.name === d));
 
             const saleDiscount = discounts.find(d => {
-                const discountStart = new Date(d.start_date).getTime();
-                const discountEnd = new Date(d.end_date).getTime();
+                const discountStart = this.parseDate(d.start_date).getTime();
+                const discountEnd = this.parseDate(d.end_date).getTime();
 
                 return (
                     d.game === game.name &&
@@ -36,8 +36,8 @@ export class UtilService {
 
         // Check all standalone discounts
         const standaloneDiscount = standaloneDiscounts.find(d => {
-            const discountStart = new Date(d.start_date).getTime();
-            const discountEnd = new Date(d.end_date).getTime();
+            const discountStart = this.parseDate(d.start_date).getTime();
+            const discountEnd = this.parseDate(d.end_date).getTime();
 
             return (
                 d.game === game.name &&
@@ -74,7 +74,7 @@ export class UtilService {
 
         const sales = db.sales.map(s => ({ name: s.name, start_date: s.start_date, end_date: s.end_date, discounts: s.discounts.map(discount => ({ name: discount })) }));
 
-        const discounts = db.discounts.map(d => ({ name: d.name, game: d.game, percentage: d.percentage, start_date: d.start_date, end_date: d.end_date }));
+        const discounts = db.discounts.filter(d => publishedGameNames.includes(d.game)).map(d => ({ name: d.name, game: d.game, percentage: d.percentage, start_date: d.start_date, end_date: d.end_date }));
 
         const player = {
             name: dbPlayer.name,
