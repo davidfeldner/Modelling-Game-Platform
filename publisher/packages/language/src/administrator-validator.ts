@@ -50,8 +50,12 @@ export class AdministratorValidator {
             accept('warning', 'Could not check cached data. Try pulling first.', { node: model });
             return;
         }
-
         const dbModel = this.services.util.UtilService.buildAdministratorModelFromDBModel(db, model.administrator.name);
+        if (dbModel === undefined) {
+            accept('warning', 'Could not get data from DB, is the user in the db?', { node: model });
+            return;
+        }
+
         const allowed = [
             { path: 'requests[*].status', exactMatch: true },
             { path: 'sales[*]', exactMatch: false },

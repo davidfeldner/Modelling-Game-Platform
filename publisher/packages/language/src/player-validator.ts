@@ -42,10 +42,15 @@ export class PlayerValidator {
 
     checkLibraryChange(library: PlayerLibraryType, accept: ValidationAcceptor): void {
         const playerName = library.$container.name;
-
+        
         const db = this.services.db.DatabaseService.getDBSnapshot("player", playerName);
         if (db === undefined) {
             accept('warning', 'Could not check cached player library. Try pulling first.', { node: library });
+            return;
+        }
+        const dbPlayer = db.players.find(p => p.name == playerName)
+        if (!dbPlayer) {
+            accept('warning', 'Could not find player in db, push first.', { node: library });
             return;
         }
 
@@ -60,7 +65,7 @@ export class PlayerValidator {
 
 
         const publishedGameNames = db.games.filter(g => g.versions.some(v => v.is_current && v.approved)).map(g => g.name);
-        const dbLibraryGames = db.players.find(p => p.name == playerName).library.games.filter(g => publishedGameNames.includes(g));
+        const dbLibraryGames = dbPlayer.library.games.filter(g => publishedGameNames.includes(g));
         const modelLibraryGames = library.games.map(g => g.ref.name);
         const removedGames = dbLibraryGames.filter(g => !modelLibraryGames.includes(g));
         if (removedGames.length != 0) {
@@ -69,7 +74,7 @@ export class PlayerValidator {
 
         const addedGames = modelLibraryGames.filter(g => !dbLibraryGames.includes(g));
         if (addedGames.length != 0) {
-            const playerBalance = db.players.find(p => p.name == playerName).balance;
+            const playerBalance = dbPlayer.balance;
             let sum = 0;
             addedGames.forEach(g => {
                 const game = db.games.find(i => i.name == g);
@@ -217,8 +222,12 @@ export class PlayerValidator {
             accept('warning', 'Could not check cached data. Try pulling first.', { node: model });
             return;
         }
-
         const dbModel = this.services.util.UtilService.buildPlayerModelFromDBModel(db, model.player.name);
+        if (dbModel === undefined) {
+            accept('warning', 'Could not get data from DB, is the user in the db?', { node: model });
+            return;
+        }
+
         const allowed = [
             { path: 'player.balance', exactMatch: true },
             { path: 'player.library.games[*]', exactMatch: false },

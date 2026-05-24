@@ -311,8 +311,12 @@ export class PublisherValidator {
             accept('warning', 'Could not check cached data. Try pulling first.', { node: model });
             return;
         }
-
         const dbModel = this.services.util.UtilService.buildPublisherModelFromDBModel(db, model.publisher.name);
+        if (dbModel === undefined) {
+            accept('warning', 'Could not get data from DB, is the user in the db?', { node: model });
+            return;
+        }
+        
         const allowed = [
             { path: 'publisher.balance', exactMatch: true },
             { path: 'games[*]', exactMatch: true },

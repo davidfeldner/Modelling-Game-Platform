@@ -46,7 +46,7 @@ export function pushToDBPlayer(model: PlayerModel, dbPath = './db.json'): string
     let resolvedBalance = Math.max(model.player.balance, 0);
     // Add player if they do not exist in DB
     if (!savedPlayer) {
-        let savedPlayer = {
+        savedPlayer = {
             name: model.player.name,
             balance: resolvedBalance,
             library: { games: [] },
