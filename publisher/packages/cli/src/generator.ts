@@ -372,9 +372,10 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
             dsl += `\tprice ${game.price}\n`;
             dsl += `\trelease_date ${game.release_date}\n`;
             dsl += `\tversions\n\t${game.versions?.filter(v => v.is_current).map(v => `\tversion_id "${v.version_id}" game_files "${v.game_files}"`).join(',\n\t')}\n`;
-            if (game.reviews?.length != 0) {
+            const notFlaggedOrOwnReviews = game.reviews.filter(r => !r.is_flagged || r.author === userID)
+            if (notFlaggedOrOwnReviews.length != 0) {
                 // Show not flagged reviews and player's own flagged reviews
-                dsl += `\treviews\n\t${game.reviews.filter(r => !r.is_flagged || r.author === userID).map(r => globalReviewDSL(r)).join(',\n\t')}\n`
+                dsl += `\treviews\n\t${notFlaggedOrOwnReviews.map(r => globalReviewDSL(r)).join(',\n\t')}\n`
             }
             dsl += `\n`
         }
