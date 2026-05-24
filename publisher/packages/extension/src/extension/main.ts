@@ -39,6 +39,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     context.subscriptions.push(
         commands.registerCommand('publisher.pullButton', async () => {
             const editor = window.activeTextEditor;
+            if (!editor) return;
             const cli = await getCliOrDefault(editor);
             const languageId = editor?.document.languageId;
             const fileName = path.parse(editor.document.uri.fsPath).name;
@@ -52,6 +53,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     context.subscriptions.push(
         commands.registerCommand('publisher.pushButton', async () => {
             const editor = window.activeTextEditor;
+            if (!editor) return;
             const cli = await getCliOrDefault(editor);
             const file = path.parse(editor.document.uri.fsPath).base;
             const terminal = getOrCreateTerminal(context)

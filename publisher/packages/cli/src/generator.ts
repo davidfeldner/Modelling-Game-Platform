@@ -86,9 +86,9 @@ export function pushToDBPlayer(model: PlayerModel, dbPath = './db.json'): string
     }
 
     model.games.forEach(game => {
-        const dbGame = db.games.find(g => g.name === game.name);
-        if (game.reviews.some(r => r.author === model.player.name)) {
-            const review = game.reviews.find(r => r.author === model.player.name);
+        const dbGame = db.games.find(g => g.name === game.name)!;
+        const review = game.reviews.find(r => r.author === model.player.name);
+        if (review) {
             const existingReview = dbGame.reviews.find(r => r.author === model.player.name);
             if (existingReview) {
                 existingReview.is_flagged = review.content != existingReview.content ? false : true
@@ -119,7 +119,7 @@ export function pushToDBPublisher(model: PublisherModel, dbPath = './db.json'): 
     let resolvedBalance = Math.max(model.publisher.balance, 0);
     // Add publisher if they do not exist in DB
     if (!savedPublisher) {
-        let savedPublisher = {
+        savedPublisher = {
             name: model.publisher.name,
             balance: model.publisher.balance
         }
@@ -232,7 +232,7 @@ export function pushToDBAdministrator(model: AdministratorModel, dbPath = './db.
     let savedAdministrator = db.administrators.find(a => a.name === model.administrator.name);
     // Add administrator if they do not exist in DB
     if (!savedAdministrator) {
-        let savedAdministrator = {
+        savedAdministrator = {
             name: model.administrator.name
         }
         db.administrators.push(savedAdministrator);
@@ -351,7 +351,7 @@ function generatePlayerFile(db: databaseModel, userID: string): string {
     dsl += `player ${`${player.name}`}\n`;
     dsl += `\tbalance ${player.balance}\n`;
     dsl += `\tlibrary [${player.library.games.filter(g => publishedGameNames.includes(g)).join(', ')}]\n`;
-    if (player.transactions.length != 0)
+    if (player.transactions && player.transactions.length != 0)
         dsl += `\ttransactions\n\t${player.transactions.map(t => globalTransactionDSL(t)).join(', \n\t')}`;
     dsl += `\n\n`;
 
@@ -465,7 +465,7 @@ function generateAdministratorFile(db: databaseModel, userID: string): string {
     db.players.forEach(p => {
         dsl += `player ${p.name}\n`;
         dsl += `\tbalance ${p.balance}\n`;
-        if (p.transactions?.length != 0) {
+        if (p.transactions && p.transactions.length != 0) {
             dsl += `\ttransactions\n\t${p.transactions.map(t => globalTransactionDSL(t)).join(', \n\t')}\n`;
         }
         dsl += `\n`
