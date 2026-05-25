@@ -27,15 +27,19 @@ export class AdministratorValidator {
     constructor(private services: SharedServices) { }
 
     checkSaleOnlyHasDiscountsWithinSalePeriod(sale: AdministratorSaleType, accept: ValidationAcceptor): void {
-        const saleStart = this.services.util.UtilService.parseDate(sale.start_date);
-        const saleEnd = this.services.util.UtilService.parseDate(sale.end_date);
+        const saleStart = this.services.util.UtilService.parseDate(sale.start_date)?.getTime();
+        const saleEndDate = this.services.util.UtilService.parseDate(sale.end_date)
+        saleEndDate?.setHours(23, 59, 59, 999);;
+        const saleEnd = saleEndDate?.getTime();
         if (saleStart > saleEnd) {
             accept('error', 'Sale end must be after sale start', { node: sale });
         }
 
         for (const discount of sale.discounts) {
-            const discountStart = this.services.util.UtilService.parseDate(discount.ref.start_date);
-            const discountEnd = this.services.util.UtilService.parseDate(discount.ref.end_date);
+            const discountStart = this.services.util.UtilService.parseDate(discount.ref.start_date)?.getTime();
+            const discountEndDate = this.services.util.UtilService.parseDate(discount.ref.end_date);
+            discountEndDate?.setHours(23, 59, 59, 999);
+            const discountEnd = discountEndDate?.getTime();
 
             if (discountStart < saleStart || discountEnd > saleEnd) {
                 accept('error', 'Sale must only have games with discounts in sale period', { node: sale });

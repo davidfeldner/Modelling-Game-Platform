@@ -241,8 +241,10 @@ export class PublisherValidator {
 
 
     checkDiscountsDoNotOverlap(discount: PublisherDiscountType, accept: ValidationAcceptor): void {
-        const discountStart = this.services.util.UtilService.parseDate(discount.start_date);
-        const discountEnd = this.services.util.UtilService.parseDate(discount.end_date);
+        const discountStart = this.services.util.UtilService.parseDate(discount.start_date)?.getTime();
+        const discountEndDate = this.services.util.UtilService.parseDate(discount.end_date);
+        discountEndDate?.setHours(23, 59, 59, 999);
+        const discountEnd = discountEndDate?.getTime();
         if (discountStart > discountEnd) {
             accept('error', 'Discount end must be after discount start', { node: discount });
         }
@@ -255,8 +257,10 @@ export class PublisherValidator {
 
         for (const otherDiscount of allDiscounts) {
             if (otherDiscount !== discount) {
-                const otherStart = this.services.util.UtilService.parseDate(otherDiscount.start_date);
-                const otherEnd = this.services.util.UtilService.parseDate(otherDiscount.end_date);
+                const otherStart = this.services.util.UtilService.parseDate(otherDiscount.start_date)?.getTime();
+                const otherEndDate = this.services.util.UtilService.parseDate(otherDiscount.end_date);
+                otherEndDate?.setHours(23, 59, 59, 999);
+                const otherEnd = otherEndDate?.getTime();
 
                 if ((discountStart < otherEnd && discountEnd > otherStart)) {
                     accept('error', 'Discount periods should not overlap.', { node: discount });

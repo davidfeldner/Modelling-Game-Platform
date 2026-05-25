@@ -15,15 +15,19 @@ export class UtilService {
         // Check all discounts in sales
         for (const sale of sales) {
             const saleStart = this.parseDate(sale.start_date)?.getTime();
-            const saleEnd = this.parseDate(sale.end_date).getTime();
+            const saleEndDate = this.parseDate(sale.end_date);
+            saleEndDate?.setHours(23, 59, 59, 999);
+            const saleEnd = saleEndDate?.getTime();
 
             if (nowTime < saleStart || nowTime > saleEnd) continue;
             // Join discounts by name to get full discount details
             const discounts = sale.discounts.map(d => standaloneDiscounts.find(ad => ad.name === d));
 
             const saleDiscount = discounts.find(d => {
-                const discountStart = this.parseDate(d.start_date).getTime();
-                const discountEnd = this.parseDate(d.end_date).getTime();
+                const discountStart = this.parseDate(d.start_date)?.getTime();
+                const discountEndDate = this.parseDate(d.end_date);
+                discountEndDate?.setHours(23, 59, 59, 999);
+                const discountEnd = discountEndDate?.getTime();
 
                 return (
                     d.game === game.name &&
@@ -36,8 +40,10 @@ export class UtilService {
 
         // Check all standalone discounts
         const standaloneDiscount = standaloneDiscounts.find(d => {
-            const discountStart = this.parseDate(d.start_date).getTime();
-            const discountEnd = this.parseDate(d.end_date).getTime();
+            const discountStart = this.parseDate(d.start_date)?.getTime();
+            const discountEndDate = this.parseDate(d.end_date);
+            discountEndDate?.setHours(23, 59, 59, 999);
+            const discountEnd = discountEndDate?.getTime();
 
             return (
                 d.game === game.name &&
